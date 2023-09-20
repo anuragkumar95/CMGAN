@@ -128,7 +128,7 @@ class Trainer:
     
 
     def calculate_generator_loss(self, generator_outputs):
-        print("GEN LOSS:",generator_outputs['clean_mag'].shape, generator_outputs["est_mag"].shape)
+       
         predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
@@ -143,15 +143,15 @@ class Trainer:
             generator_outputs["est_real"], generator_outputs["clean_real"]
         ) + F.mse_loss(generator_outputs["est_imag"], generator_outputs["clean_imag"])
 
-        print("EST_AUD:",generator_outputs["est_audio"].shape, generator_outputs["clean"].shape)
+        est_audio_len = generator_outputs["est_audio"].shape[-1]
         time_loss = torch.mean(
-            torch.abs(generator_outputs["est_audio"] - generator_outputs["clean"])
+            torch.abs(generator_outputs["est_audio"] - generator_outputs["clean"][:, :est_audio_len])
         )
 
         loss = (
             args.loss_weights[0] * loss_ri
             + args.loss_weights[1] * loss_mag
-            #+ args.loss_weights[2] * time_loss
+            + args.loss_weights[2] * time_loss
             + args.loss_weights[3] * gen_loss_GAN
         )
 
@@ -162,8 +162,8 @@ class Trainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
-        pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
-        print("PESQ:", pesq_score)
+        pesq_mask, pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
+        
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
             
@@ -175,7 +175,7 @@ class Trainer:
             )
             discrim_loss_metric = F.mse_loss(
                 predict_max_metric.flatten(), generator_outputs["one_labels"]
-            ) + F.mse_loss(predict_enhance_metric.flatten(), pesq_score)
+            ) + F.mse_loss(predict_enhance_metric.flatten()*pesq_mask, pesq_score*pesq_mask)
         else:
             discrim_loss_metric = None
 
@@ -191,9 +191,8 @@ class Trainer:
             noisy = batch[1].to(self.gpu_id)
             one_labels = one_labels.to(self.gpu_id)
 
-        win_len=25
+        win_len=50
         noisy_spec, clean_spec = self.create_spectrograms(noisy, clean)
-        #print("Noisy:", noisy_spec.shape)
         batch,freq,time,ch = noisy_spec.shape
         for i in range(time):
             if i < win_len//2:
@@ -201,28 +200,26 @@ class Trainer:
                 pad = torch.zeros(batch, freq, pad_len, ch)
                 n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
                 c_frame = clean_spec[:,:, :i + (win_len//2)+1,:]
-                #print("Pad:", pad.shape, n_frame.shape, c_frame.shape)
                 n_frame = torch.cat([pad, n_frame], dim=2)
                 c_frame = torch.cat([pad, c_frame], dim=2)
-                aud_pad = torch.zeros(clean.shape[0], ((win_len//2) - i)*self.hop)
+                aud_pad = torch.zeros(clean.shape[0], pad_len * self.hop)
                 c_aud = torch.cat([aud_pad, clean[:, :(i + (win_len//2)) * self.hop]], dim=-1)
-                print("C_AUD:", c_aud.shape)
-            elif i > time - (win_len//2):
-                pad_len = i - (win_len//2)
+      
+            elif i > time - 1 - win_len:
+                pad_len = win_len - (time - 1 - i)
                 pad = torch.zeros(batch, freq, pad_len, ch)
-                #print("Pad:", pad.shape, n_frame.shape, c_frame.shape)
                 n_frame = noisy_spec[:,:,i:,:]
                 c_frame = clean_spec[:,:,i:,:]
                 n_frame = torch.cat([n_frame, pad], dim=2)
                 c_frame = torch.cat([c_frame, pad], dim=2)
-                aud_pad = torch.zeros(clean.shape[0], (i - (win_len//2))*self.hop)
-                c_aud = torch.cat([clean[:, (i + (win_len//2)+1) * self.hop:], aud_pad], dim=-1)
-                print("C_AUD:", c_aud.shape)
+                aud_pad = torch.zeros(clean.shape[0], pad_len * self.hop)
+                c_aud = torch.cat([clean[:, i * self.hop:], aud_pad], dim=-1)
+              
             else:
                 n_frame = noisy_spec[:,:,i:i+win_len,:]
                 c_frame = clean_spec[:,:,i:i+win_len,:]
-                c_aud = clean[:, i*self.hop:i*self.hop+2400]
-                print("C_AUD:", c_aud.shape)
+                c_aud = clean[:, i*self.hop:(i+win_len)*self.hop]
+              
             
             generator_outputs = self.forward_generator_step(c_frame,n_frame)
             generator_outputs["one_labels"] = one_labels
@@ -241,7 +238,7 @@ class Trainer:
                 self.optimizer_disc.step()
             else:
                 discrim_loss_metric = torch.tensor([0.0])
-            print("LOSS:",loss.item(), discrim_loss_metric.item())
+       
             yield loss.item(), discrim_loss_metric.item()
 
 
@@ -283,38 +280,49 @@ class Trainer:
 
     @torch.no_grad()
     def test_step2(self, batch):
+        # Trainer generator
+        clean = batch[0]
+        noisy = batch[1]
+        one_labels = torch.ones(args.batch_size)
+        if self.gpu_id:
+            clean = batch[0].to(self.gpu_id)
+            noisy = batch[1].to(self.gpu_id)
+            one_labels = one_labels.to(self.gpu_id)
 
-        clean = batch[0].to(self.gpu_id)
-        noisy = batch[1].to(self.gpu_id)
-        one_labels = torch.ones(args.batch_size).to(self.gpu_id)
-
-        win_len=25
+        win_len=50
         noisy_spec, clean_spec = self.create_spectrograms(noisy, clean)
-        _,_,time,freq = noisy_spec.shape
+        batch,freq,time,ch = noisy_spec.shape
         for i in range(time):
             if i < win_len//2:
                 pad_len = (win_len//2) - i
-                pad = torch.zeros(pad_len, freq)
-                n_frame = noisy_spec[:,:,i : i + (win_len//2),:]
-                c_frame = clean_spec[:,:,i : i + (win_len//2),:]
+                pad = torch.zeros(batch, freq, pad_len, ch)
+                n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
+                c_frame = clean_spec[:,:, :i + (win_len//2)+1,:]
                 n_frame = torch.cat([pad, n_frame], dim=2)
                 c_frame = torch.cat([pad, c_frame], dim=2)
-            elif i > time - (win_len//2):
-                pad_len = i - (win_len//2)
-                pad = torch.zeros(pad_len, freq)
+                aud_pad = torch.zeros(clean.shape[0], pad_len * self.hop)
+                c_aud = torch.cat([aud_pad, clean[:, :(i + (win_len//2)) * self.hop]], dim=-1)
+
+            elif i > time - 1 - win_len:
+                pad_len = win_len - (time - 1 - i)
+                pad = torch.zeros(batch, freq, pad_len, ch)
                 n_frame = noisy_spec[:,:,i:,:]
                 c_frame = clean_spec[:,:,i:,:]
                 n_frame = torch.cat([n_frame, pad], dim=2)
                 c_frame = torch.cat([c_frame, pad], dim=2)
+                aud_pad = torch.zeros(clean.shape[0], pad_len * self.hop)
+                c_aud = torch.cat([clean[:, i * self.hop:], aud_pad], dim=-1)
             else:
                 n_frame = noisy_spec[:,:,i:i+win_len,:]
                 c_frame = clean_spec[:,:,i:i+win_len,:]
+                c_aud = clean[:, i*self.hop:(i+win_len)*self.hop]
+             
             generator_outputs = self.forward_generator_step(
                 c_frame,
                 n_frame,
             )
             generator_outputs["one_labels"] = one_labels
-            generator_outputs["clean"] = c_frame
+            generator_outputs["clean"] = c_aud
 
             loss = self.calculate_generator_loss(generator_outputs)
 
@@ -361,6 +369,7 @@ class Trainer:
         disc_loss_avg = disc_loss_total / step
 
         template = "GPU: {}, Generator loss: {}, Discriminator loss: {}"
+        print(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
         logging.info(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
 
         return gen_loss_avg
@@ -375,26 +384,29 @@ class Trainer:
         for epoch in range(args.epochs):
             self.model.train()
             self.discriminator.train()
-            for idx, batch in enumerate(self.train_ds):
-                step = idx + 1
+            step = 0
+            for _, batch in enumerate(self.train_ds):
                 for loss, disc_loss in self.train_step2(batch):
                     template = "GPU: {}, Epoch {}, Step {}, loss: {}, disc_loss: {}"
+                    print(template.format(self.gpu_id, epoch, step, loss, disc_loss))
                     if (step % args.log_interval) == 0:
                         logging.info(
                             template.format(self.gpu_id, epoch, step, loss, disc_loss)
                         )
-                gen_loss = self.test()
-                path = os.path.join(
-                    args.save_model_dir,
-                    "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
-                )
-                if not os.path.exists(args.save_model_dir):
-                    os.makedirs(args.save_model_dir)
-                if self.gpu_id == 0:
-                    torch.save(self.model.module.state_dict(), path)
+                    step += 1
                 scheduler_G.step()
                 scheduler_D.step()
-                step += 1
+            gen_loss = self.test2()
+            path = os.path.join(
+                args.save_model_dir,
+                "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
+            )
+            if not os.path.exists(args.save_model_dir):
+                os.makedirs(args.save_model_dir)
+            if self.gpu_id == 0:
+                torch.save(self.model.module.state_dict(), path)
+                
+            
 
     def test(self):
         self.model.eval()

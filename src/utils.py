@@ -48,3 +48,5 @@ class LearnableSigmoid(nn.Module):
 
     def forward(self, x):
         return self.beta * torch.sigmoid(self.slope * x)
+    
+
