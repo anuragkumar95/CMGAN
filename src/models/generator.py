@@ -129,6 +129,12 @@ class MaskDecoder(nn.Module):
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
+        self.out_mu = nn.Linear(num_features, num_features)
+        self.out_sigma = nn.Linear(num_features, num_features)
+        self.N = torch.distributions.Normal(0, 1)
+        # hack to get sampling on the GPU
+        #self.N.loc = self.N.loc.cuda() 
+        #self.N.scale = self.N.scale.cuda()
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -136,6 +142,10 @@ class MaskDecoder(nn.Module):
         x = self.conv_1(x)
         x = self.prelu(self.norm(x))
         x = self.final_conv(x).permute(0, 3, 2, 1).squeeze(-1)
+        #x_mu = self.out_mu(x)
+        #x_sigma = self.out_sigma(x)
+        #x = x_mu + x_sigma*self.N.sample(x_mu.shape)
+        #print(f"Final mask_decoder conv_out:{x.shape}")
         return self.prelu_out(x).permute(0, 2, 1).unsqueeze(1)
 
 
@@ -153,6 +163,7 @@ class ComplexDecoder(nn.Module):
         x = self.sub_pixel(x)
         x = self.prelu(self.norm(x))
         x = self.conv(x)
+        #print(f"Final comp_decoder conv_out:{x.shape}")
         return x
 
 
@@ -172,12 +183,15 @@ class TSCNet(nn.Module):
         self.complex_decoder = ComplexDecoder(num_channel=num_channel)
 
     def forward(self, x):
+        #print(f"Input shape:{x.shape}")
         mag = torch.sqrt(x[:, 0, :, :] ** 2 + x[:, 1, :, :] ** 2).unsqueeze(1)
+        #print(f"Input mag shape:{mag.shape}")
         noisy_phase = torch.angle(
             torch.complex(x[:, 0, :, :], x[:, 1, :, :])
         ).unsqueeze(1)
         x_in = torch.cat([mag, x], dim=1)
 
+        #print("Input to TSCB:",x_in.shape)
         out_1 = self.dense_encoder(x_in)
         out_2 = self.TSCB_1(out_1)
         out_3 = self.TSCB_2(out_2)
@@ -185,9 +199,11 @@ class TSCNet(nn.Module):
         out_5 = self.TSCB_4(out_4)
 
         mask = self.mask_decoder(out_5)
+        #print("Out Mask:", mask.shape)
         out_mag = mask * mag
 
         complex_out = self.complex_decoder(out_5)
+        #print("Complex out:", complex_out.shape)
         mag_real = out_mag * torch.cos(noisy_phase)
         mag_imag = out_mag * torch.sin(noisy_phase)
         final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)

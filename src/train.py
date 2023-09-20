@@ -43,16 +43,16 @@ def ddp_setup(rank, world_size):
 
 
 class Trainer:
-    def __init__(self, train_ds, test_ds, gpu_id: int):
+    def __init__(self, train_ds, test_ds, gpu_id: int = None):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
         self.test_ds = test_ds
-        self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1).cuda()
+        self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1)#.cuda()
         summary(
             self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
         )
-        self.discriminator = discriminator.Discriminator(ndf=16).cuda()
+        self.discriminator = discriminator.Discriminator(ndf=16)#.cuda()
         summary(
             self.discriminator,
             [
@@ -64,34 +64,39 @@ class Trainer:
         self.optimizer_disc = torch.optim.AdamW(
             self.discriminator.parameters(), lr=2 * args.init_lr
         )
-
-        self.model = DDP(self.model, device_ids=[gpu_id])
-        self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
+        if gpu_id:
+            self.model = self.model.cuda()
+            self.discriminator = self.discriminator.cuda()
+            self.model = DDP(self.model, device_ids=[gpu_id])
+            self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
         self.gpu_id = gpu_id
 
-    def forward_generator_step(self, clean, noisy):
-
+    
+    def create_spectrograms(self, noisy, clean):
         # Normalization
         c = torch.sqrt(noisy.size(-1) / torch.sum((noisy**2.0), dim=-1))
         noisy, clean = torch.transpose(noisy, 0, 1), torch.transpose(clean, 0, 1)
         noisy, clean = torch.transpose(noisy * c, 0, 1), torch.transpose(
             clean * c, 0, 1
         )
-
+        #NOTE: PLEASE REMOVE COMMENTS WHEN TRAINING ON GPU
         noisy_spec = torch.stft(
             noisy,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
             onesided=True,
         )
         clean_spec = torch.stft(
             clean,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
             onesided=True,
         )
+        return noisy_spec, clean_spec
+        
+    def forward_generator_step(self, clean_spec, noisy_spec):
         noisy_spec = power_compress(noisy_spec).permute(0, 1, 3, 2)
         clean_spec = power_compress(clean_spec)
         clean_real = clean_spec[:, 0, :, :].unsqueeze(1)
@@ -107,7 +112,7 @@ class Trainer:
             est_spec_uncompress,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
             onesided=True,
         )
 
@@ -120,9 +125,10 @@ class Trainer:
             "clean_mag": clean_mag,
             "est_audio": est_audio,
         }
+    
 
     def calculate_generator_loss(self, generator_outputs):
-
+        print("GEN LOSS:",generator_outputs['clean_mag'].shape, generator_outputs["est_mag"].shape)
         predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
@@ -137,6 +143,7 @@ class Trainer:
             generator_outputs["est_real"], generator_outputs["clean_real"]
         ) + F.mse_loss(generator_outputs["est_imag"], generator_outputs["clean_imag"])
 
+        print("EST_AUD:",generator_outputs["est_audio"].shape, generator_outputs["clean"].shape)
         time_loss = torch.mean(
             torch.abs(generator_outputs["est_audio"] - generator_outputs["clean"])
         )
@@ -144,7 +151,7 @@ class Trainer:
         loss = (
             args.loss_weights[0] * loss_ri
             + args.loss_weights[1] * loss_mag
-            + args.loss_weights[2] * time_loss
+            #+ args.loss_weights[2] * time_loss
             + args.loss_weights[3] * gen_loss_GAN
         )
 
@@ -156,9 +163,10 @@ class Trainer:
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
         pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
-
+        print("PESQ:", pesq_score)
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
+            
             predict_enhance_metric = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
             )
@@ -172,17 +180,86 @@ class Trainer:
             discrim_loss_metric = None
 
         return discrim_loss_metric
+    
+    def train_step2(self, batch):
+        # Trainer generator
+        clean = batch[0]
+        noisy = batch[1]
+        one_labels = torch.ones(args.batch_size)
+        if self.gpu_id:
+            clean = batch[0].to(self.gpu_id)
+            noisy = batch[1].to(self.gpu_id)
+            one_labels = one_labels.to(self.gpu_id)
+
+        win_len=25
+        noisy_spec, clean_spec = self.create_spectrograms(noisy, clean)
+        #print("Noisy:", noisy_spec.shape)
+        batch,freq,time,ch = noisy_spec.shape
+        for i in range(time):
+            if i < win_len//2:
+                pad_len = (win_len//2) - i
+                pad = torch.zeros(batch, freq, pad_len, ch)
+                n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
+                c_frame = clean_spec[:,:, :i + (win_len//2)+1,:]
+                #print("Pad:", pad.shape, n_frame.shape, c_frame.shape)
+                n_frame = torch.cat([pad, n_frame], dim=2)
+                c_frame = torch.cat([pad, c_frame], dim=2)
+                aud_pad = torch.zeros(clean.shape[0], ((win_len//2) - i)*self.hop)
+                c_aud = torch.cat([aud_pad, clean[:, :(i + (win_len//2)) * self.hop]], dim=-1)
+                print("C_AUD:", c_aud.shape)
+            elif i > time - (win_len//2):
+                pad_len = i - (win_len//2)
+                pad = torch.zeros(batch, freq, pad_len, ch)
+                #print("Pad:", pad.shape, n_frame.shape, c_frame.shape)
+                n_frame = noisy_spec[:,:,i:,:]
+                c_frame = clean_spec[:,:,i:,:]
+                n_frame = torch.cat([n_frame, pad], dim=2)
+                c_frame = torch.cat([c_frame, pad], dim=2)
+                aud_pad = torch.zeros(clean.shape[0], (i - (win_len//2))*self.hop)
+                c_aud = torch.cat([clean[:, (i + (win_len//2)+1) * self.hop:], aud_pad], dim=-1)
+                print("C_AUD:", c_aud.shape)
+            else:
+                n_frame = noisy_spec[:,:,i:i+win_len,:]
+                c_frame = clean_spec[:,:,i:i+win_len,:]
+                c_aud = clean[:, i*self.hop:i*self.hop+2400]
+                print("C_AUD:", c_aud.shape)
+            
+            generator_outputs = self.forward_generator_step(c_frame,n_frame)
+            generator_outputs["one_labels"] = one_labels
+            generator_outputs["clean"] = c_aud
+            loss = self.calculate_generator_loss(generator_outputs)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            # Train Discriminator
+            discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
+
+            if discrim_loss_metric is not None:
+                self.optimizer_disc.zero_grad()
+                discrim_loss_metric.backward()
+                self.optimizer_disc.step()
+            else:
+                discrim_loss_metric = torch.tensor([0.0])
+            print("LOSS:",loss.item(), discrim_loss_metric.item())
+            yield loss.item(), discrim_loss_metric.item()
+
 
     def train_step(self, batch):
-
         # Trainer generator
-        clean = batch[0].to(self.gpu_id)
-        noisy = batch[1].to(self.gpu_id)
-        one_labels = torch.ones(args.batch_size).to(self.gpu_id)
+        clean = batch[0]
+        noisy = batch[1]
+        one_labels = torch.ones(args.batch_size)
+        if self.gpu_id:
+            clean = batch[0].to(self.gpu_id)
+            noisy = batch[1].to(self.gpu_id)
+            one_labels = torch.ones(args.batch_size).to(self.gpu_id)
+        
+        noisy_spec, clean_spec = self.create_spectrograms(noisy, clean)
 
         generator_outputs = self.forward_generator_step(
-            clean,
-            noisy,
+            clean_spec,
+            noisy_spec,
         )
         generator_outputs["one_labels"] = one_labels
         generator_outputs["clean"] = clean
@@ -205,6 +282,50 @@ class Trainer:
         return loss.item(), discrim_loss_metric.item()
 
     @torch.no_grad()
+    def test_step2(self, batch):
+
+        clean = batch[0].to(self.gpu_id)
+        noisy = batch[1].to(self.gpu_id)
+        one_labels = torch.ones(args.batch_size).to(self.gpu_id)
+
+        win_len=25
+        noisy_spec, clean_spec = self.create_spectrograms(noisy, clean)
+        _,_,time,freq = noisy_spec.shape
+        for i in range(time):
+            if i < win_len//2:
+                pad_len = (win_len//2) - i
+                pad = torch.zeros(pad_len, freq)
+                n_frame = noisy_spec[:,:,i : i + (win_len//2),:]
+                c_frame = clean_spec[:,:,i : i + (win_len//2),:]
+                n_frame = torch.cat([pad, n_frame], dim=2)
+                c_frame = torch.cat([pad, c_frame], dim=2)
+            elif i > time - (win_len//2):
+                pad_len = i - (win_len//2)
+                pad = torch.zeros(pad_len, freq)
+                n_frame = noisy_spec[:,:,i:,:]
+                c_frame = clean_spec[:,:,i:,:]
+                n_frame = torch.cat([n_frame, pad], dim=2)
+                c_frame = torch.cat([c_frame, pad], dim=2)
+            else:
+                n_frame = noisy_spec[:,:,i:i+win_len,:]
+                c_frame = clean_spec[:,:,i:i+win_len,:]
+            generator_outputs = self.forward_generator_step(
+                c_frame,
+                n_frame,
+            )
+            generator_outputs["one_labels"] = one_labels
+            generator_outputs["clean"] = c_frame
+
+            loss = self.calculate_generator_loss(generator_outputs)
+
+            discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
+            if discrim_loss_metric is None:
+                discrim_loss_metric = torch.tensor([0.0])
+
+            yield loss.item(), discrim_loss_metric.item()
+
+
+    @torch.no_grad()
     def test_step(self, batch):
 
         clean = batch[0].to(self.gpu_id)
@@ -225,6 +346,55 @@ class Trainer:
             discrim_loss_metric = torch.tensor([0.0])
 
         return loss.item(), discrim_loss_metric.item()
+
+    def test2(self):
+        self.model.eval()
+        self.discriminator.eval()
+        gen_loss_total = 0.0
+        disc_loss_total = 0.0
+        for idx, batch in enumerate(self.test_ds):
+            step = idx + 1
+            for loss, disc_loss in self.test_step2(batch):
+                gen_loss_total += loss
+                disc_loss_total += disc_loss
+        gen_loss_avg = gen_loss_total / step
+        disc_loss_avg = disc_loss_total / step
+
+        template = "GPU: {}, Generator loss: {}, Discriminator loss: {}"
+        logging.info(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
+
+        return gen_loss_avg
+
+    def train2(self):
+        scheduler_G = torch.optim.lr_scheduler.StepLR(
+            self.optimizer, step_size=args.decay_epoch, gamma=0.5
+        )
+        scheduler_D = torch.optim.lr_scheduler.StepLR(
+            self.optimizer_disc, step_size=args.decay_epoch, gamma=0.5
+        )
+        for epoch in range(args.epochs):
+            self.model.train()
+            self.discriminator.train()
+            for idx, batch in enumerate(self.train_ds):
+                step = idx + 1
+                for loss, disc_loss in self.train_step2(batch):
+                    template = "GPU: {}, Epoch {}, Step {}, loss: {}, disc_loss: {}"
+                    if (step % args.log_interval) == 0:
+                        logging.info(
+                            template.format(self.gpu_id, epoch, step, loss, disc_loss)
+                        )
+                gen_loss = self.test()
+                path = os.path.join(
+                    args.save_model_dir,
+                    "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
+                )
+                if not os.path.exists(args.save_model_dir):
+                    os.makedirs(args.save_model_dir)
+                if self.gpu_id == 0:
+                    torch.save(self.model.module.state_dict(), path)
+                scheduler_G.step()
+                scheduler_D.step()
+                step += 1
 
     def test(self):
         self.model.eval()
@@ -262,7 +432,7 @@ class Trainer:
                     logging.info(
                         template.format(self.gpu_id, epoch, step, loss, disc_loss)
                     )
-            gen_loss = self.test()
+            gen_loss = self.test2()
             path = os.path.join(
                 args.save_model_dir,
                 "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
@@ -276,22 +446,26 @@ class Trainer:
 
 
 def main(rank: int, world_size: int, args):
-    ddp_setup(rank, world_size)
-    if rank == 0:
-        print(args)
-        available_gpus = [
-            torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
-        ]
-        print(available_gpus)
+    #ddp_setup(rank, world_size)
+    #if rank == 0:
+    #    print(args)
+    #    available_gpus = [
+    #        torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
+    #    ]
+    #    print(f"Available gpus:{available_gpus}")
+    #print("AAAA")
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 2, args.cut_len
     )
+    print(f"Train:{len(train_ds)}, Test:{len(test_ds)}")
     trainer = Trainer(train_ds, test_ds, rank)
-    trainer.train()
+    trainer.train2()
     destroy_process_group()
 
 
 if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
-    mp.spawn(main, args=(world_size, args), nprocs=world_size)
+    print(f"World size:{world_size}")
+    #mp.spawn(main, args=(world_size, args), nprocs=world_size+1)
+    main(0, world_size, args)
