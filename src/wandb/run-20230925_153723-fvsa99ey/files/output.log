@@ -1,0 +1,28 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 721, in <module>
+    main(0, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 712, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 623, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 327, in train_step2
+    for i, outputs in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :],
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 140, in forward_generator_step2
+    est_real, est_imag = self.model(mini_batch, k=samples)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 222, in forward
+    mask = self.mask_decoder(out_5)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 150, in forward
+    x_mu = self.out_mu(x)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/linear.py", line 103, in forward
+    return F.linear(input, self.weight, self.bias)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/functional.py", line 1848, in linear
+    return torch._C._nn.linear(input, weight, bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (201x51 and 50x1)

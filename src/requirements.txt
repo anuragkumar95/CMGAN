@@ -9,3 +9,4 @@ SoundFile==0.10.3.post1
 torch==1.10.0
 torchaudio==0.10.0
 torchinfo==1.5.3
+wandb

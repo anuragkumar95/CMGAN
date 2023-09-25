@@ -1,0 +1,52 @@
+{
+    "os": "macOS-10.16-x86_64-i386-64bit",
+    "python": "3.9.18",
+    "heartbeatAt": "2023-09-25T19:37:24.292281",
+    "startedAt": "2023-09-25T19:37:23.169774",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--data_dir",
+        "/Users/anuragkumar/Anurag/Voicebank-debug",
+        "--batch_size",
+        "1",
+        "--win_len",
+        "50"
+    ],
+    "state": "running",
+    "program": "/Users/anuragkumar/Anurag/CMGAN/src/train.py",
+    "codePathLocal": "train.py",
+    "codePath": "src/train.py",
+    "git": {
+        "remote": "git@github.com:anuragkumar95/CMGAN.git",
+        "commit": "924ceb7b3597faace555e02aebe9ab8c258c2b60"
+    },
+    "email": null,
+    "root": "/Users/anuragkumar/Anurag/CMGAN",
+    "host": "Anurags-MacBook-Pro.local",
+    "username": "anuragkumar",
+    "executable": "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2400,
+        "min": 2400,
+        "max": 2400
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2400,
+            "min": 2400,
+            "max": 2400
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 931.546989440918,
+            "used": 8.53677749633789
+        }
+    },
+    "memory": {
+        "total": 32.0
+    }
+}
