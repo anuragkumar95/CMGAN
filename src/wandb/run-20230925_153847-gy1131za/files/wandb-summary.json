@@ -1,1 +1,1 @@
-{"Generator_loss": 0.2049272209405899, "Generator_step": 78, "_timestamp": 1695671508.8309948, "_runtime": 781.2725079059601, "_step": 78}
+{"Generator_loss": 0.05372551083564758, "Generator_step": 268, "_timestamp": 1695749881.6699588, "_runtime": 79154.1114718914, "_step": 2200, "Train_D_loss": 0.7813952565193176, "Train_G_loss": 0.004418047145009041, "Train_PESQ": 0.07897329330444336, "Step": 5}

@@ -47,12 +47,13 @@ def ddp_setup(rank, world_size):
 
 
 class Trainer:
-    def __init__(self, train_ds, test_ds, win_len, gpu_id: int = None):
+    def __init__(self, train_ds, test_ds, win_len, samples, gpu_id: int = None):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.win_len=win_len
+        self.samples = samples
         self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1, win_len=self.win_len+1)#.cuda()
         #summary(
         #    self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
@@ -89,14 +90,14 @@ class Trainer:
             noisy,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
             onesided=True,
         )
         clean_spec = torch.stft(
             clean,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
             onesided=True,
         )
         return noisy_spec, clean_spec
@@ -133,7 +134,7 @@ class Trainer:
     
     def forward_generator_step2(self, noisy_stack, clean_real_stack, clean_imag_stack, clean):
         steps, b, _, win_len, f = noisy_stack.shape
-        samples = 24
+        samples = self.samples
         for idx in range(steps):
             mini_batch = noisy_stack[idx, :, :, :, :]
             
@@ -153,7 +154,7 @@ class Trainer:
                     est_spec_uncompress.permute(0,2,1,3),
                     self.n_fft,
                     self.hop,
-                    window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
+                    window=torch.hamming_window(self.n_fft).to(self.gpu_id),
                     onesided=True,
                 )
                 est_audios.append(est_audio)
@@ -332,7 +333,7 @@ class Trainer:
             if self.gpu_id:
                 outputs["one_labels"] =  outputs["one_labels"].to(self.gpu_id)
             
-            loss = self.calculate_generator_loss2(outputs, samples=24)
+            loss = self.calculate_generator_loss2(outputs, samples=self.samples)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -386,7 +387,7 @@ class Trainer:
                     est_spec_uncompress.permute(0,2,1,3),
                     self.n_fft,
                     self.hop,
-                    window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
+                    window=torch.hamming_window(self.n_fft).to(self.gpu_id),
                     onesided=True,
                 )
         
@@ -643,8 +644,6 @@ class Trainer:
                 os.makedirs(args.save_model_dir)
             if self.gpu_id == 0:
                 torch.save(self.model.module.state_dict(), path)
-                
-            
 
     def test(self):
         self.model.eval()
@@ -696,13 +695,13 @@ class Trainer:
 
 
 def main(rank: int, world_size: int, args):
-    #ddp_setup(rank, world_size)
-    #if rank == 0:
-    #    print(args)
-    #    available_gpus = [
-    #        torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
-    #    ]
-    #    print(f"Available gpus:{available_gpus}")
+    ddp_setup(rank, world_size)
+    if rank == 0:
+        print(args)
+        available_gpus = [
+            torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
+        ]
+        print(f"Available gpus:{available_gpus}")
     #print("AAAA")
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 2, args.cut_len
@@ -717,5 +716,5 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     print(f"World size:{world_size}")
-    #mp.spawn(main, args=(world_size, args), nprocs=world_size+1)
-    main(0, world_size, args)
+    mp.spawn(main, args=(world_size, args), nprocs=world_size+1)
+    #main(0, world_size, args)
