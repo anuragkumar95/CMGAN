@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=120, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=4)
 parser.add_argument("--win_len", type=int, default=24)
+parser.add_argument("--samples", type=int, default=24)
 parser.add_argument("--log_interval", type=int, default=500)
 parser.add_argument("--decay_epoch", type=int, default=30, help="epoch from which to start lr decay")
 parser.add_argument("--init_lr", type=float, default=5e-4, help="initial learning rate")
@@ -707,7 +708,7 @@ def main(rank: int, world_size: int, args):
         args.data_dir, args.batch_size, 2, args.cut_len
     )
     print(f"Train:{len(train_ds)}, Test:{len(test_ds)}")
-    trainer = Trainer(train_ds, test_ds, args.win_len, rank)
+    trainer = Trainer(train_ds, test_ds, args.win_len, args.samples, rank)
     trainer.train2()
     destroy_process_group()
 
