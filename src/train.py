@@ -256,7 +256,9 @@ class Trainer:
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
         pesq_mask, pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
-        print(f"PESQ:{pesq_score}")
+        print(f"PESQ:{pesq_score}, PESQ MASK:{pesq_mask}")
+        pesq_score = pesq_score.to(self.gpu_id)
+        pesq_mask = pesq_mask.to(self.gpu_id)
        
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
@@ -330,6 +332,7 @@ class Trainer:
             clean_win_real_stack = torch.cat([clean_win_real_stack, c_frame[:, 0, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
             clean_win_imag_stack = torch.cat([clean_win_imag_stack, c_frame[:, 1, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
 
+        #Perhaps append to a list and concatenate once will be more optimal?
         generator_outputs = {
             "est_real": None,
             "est_imag": None,
@@ -730,7 +733,7 @@ def main(rank: int, world_size: int, args):
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 1, args.cut_len
     )
-    print(f"Train:{len(train_ds)}, Test:{len(test_ds)}")
+    #print(f"Train:{len(train_ds)}, Test:{len(test_ds)}")
     trainer = Trainer(train_ds, test_ds, args.win_len, args.samples, rank)
     trainer.train2()
     destroy_process_group()

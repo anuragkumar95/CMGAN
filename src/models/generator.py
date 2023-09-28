@@ -128,7 +128,7 @@ class MaskDecoder(nn.Module):
         self.norm = nn.InstanceNorm2d(out_channel, affine=True)
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
-        self.out = nn.Linear(signal_window, 1)
+        #self.out = nn.Linear(signal_window, 1)
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
         #Predict mask for the middle frame of window
         self.out_mu = nn.Linear(signal_window, 1)
