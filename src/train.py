@@ -72,8 +72,8 @@ class Trainer:
             self.discriminator.parameters(), lr=2 * args.init_lr
         )
         if gpu_id:
-            self.model = self.model.cuda()
-            self.discriminator = self.discriminator.cuda()
+            self.model = self.model.to(gpu_id)
+            self.discriminator = self.discriminator.to(gpu_id)
             self.model = DDP(self.model, device_ids=[gpu_id])
             self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
         self.gpu_id = gpu_id
@@ -149,6 +149,8 @@ class Trainer:
                 est_spec_uncompress = power_uncompress(est_real[k, ...], est_imag[k, ...]).squeeze(1)
                 #Pad the est_spec on both sides since istft won't work on single frame
                 pad = torch.zeros(b,1,f,2)
+                if self.gpu_id is not None:
+                    pad = pad.to(self.gpu_id)
                 est_spec_uncompress = torch.cat([pad, est_spec_uncompress, pad], dim=1)
                 
                 est_audio = torch.istft(
@@ -166,6 +168,8 @@ class Trainer:
             en = st + self.n_fft
             #Account for zero pading
             aud_pad = torch.zeros(b, self.n_fft)
+            if self.gpu_is is not None:
+                aud_pad = aud_pad.to(self.gpu_id)
             clean_aud = torch.cat([aud_pad, clean[:, st:en], aud_pad], dim=-1)
             
             clean_real_slc = clean_real_stack[idx, :, :, :, (win_len//2)+1].unsqueeze(-1)
@@ -273,7 +277,7 @@ class Trainer:
         clean = batch[0]
         noisy = batch[1]
         one_labels = torch.ones(args.batch_size)
-        if self.gpu_id:
+        if self.gpu_id is not None:
             clean = batch[0].to(self.gpu_id)
             noisy = batch[1].to(self.gpu_id)
             one_labels = one_labels.to(self.gpu_id)
@@ -292,6 +296,8 @@ class Trainer:
             if i < win_len//2:
                 pad_len = (win_len//2) - i
                 pad = torch.zeros(batch, ch, pad_len, freq)
+                if self.gpu_id is not None:
+                    pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
                 c_frame = clean_spec[:,:, :, :i + (win_len//2)+1]
                 n_frame = torch.cat([pad, n_frame], dim=2)
@@ -301,6 +307,8 @@ class Trainer:
             elif i > time - 1 - win_len:
                 pad_len = win_len - (time - 1 - i)
                 pad = torch.zeros(batch, ch, pad_len, freq)
+                if self.gpu_id is not None:
+                    pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:, :, i:, :]
                 c_frame = clean_spec[:, :, :, i:]
                 n_frame = torch.cat([n_frame, pad], dim=2)
@@ -331,7 +339,7 @@ class Trainer:
                                                    clean_win_imag_stack[1:, :, :, :, :],
                                                    clean)):
             outputs["one_labels"] = torch.ones(args.batch_size)
-            if self.gpu_id:
+            if self.gpu_id is not None:
                 outputs["one_labels"] =  outputs["one_labels"].to(self.gpu_id)
             
             loss = self.calculate_generator_loss2(outputs, samples=self.samples)
@@ -717,5 +725,5 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     print(f"World size:{world_size}")
-    mp.spawn(main, args=(world_size, args), nprocs=world_size+1)
+    mp.spawn(main, args=(world_size, args), nprocs=world_size)
     #main(0, world_size, args)
