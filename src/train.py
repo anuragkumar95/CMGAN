@@ -71,7 +71,7 @@ class Trainer:
         self.optimizer_disc = torch.optim.AdamW(
             self.discriminator.parameters(), lr=2 * args.init_lr
         )
-        if gpu_id:
+        if gpu_id is not None:
             self.model = self.model.to(gpu_id)
             self.discriminator = self.discriminator.to(gpu_id)
             self.model = DDP(self.model, device_ids=[gpu_id])
