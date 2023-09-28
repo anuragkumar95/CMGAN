@@ -134,9 +134,10 @@ class MaskDecoder(nn.Module):
         self.out_mu = nn.Linear(signal_window, 1)
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
+        self.gpu_id = gpu_id
         # hack to get sampling on the GPU
-        self.N.loc = self.N.loc.to(gpu_id) 
-        self.N.scale = self.N.scale.to(gpu_id)
+        #self.N.loc = self.N.loc.to(gpu_id) 
+        #self.N.scale = self.N.scale.to(gpu_id)
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -144,12 +145,11 @@ class MaskDecoder(nn.Module):
         x = self.conv_1(x)
         x = self.prelu(self.norm(x))
         x = self.final_conv(x).permute(0, 3, 2, 1).squeeze(-1)
-
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x)
         x_sigma = self.out_sigma(x)
-        x = x_mu + x_sigma * self.N.sample(x_mu.shape)
+        x = x_mu + x_sigma * self.N.sample(x_mu.shape).to(self.gpu_id)
         x = self.prelu_out(x)
         return x.permute(0, 2, 1).unsqueeze(1)
 
@@ -167,23 +167,20 @@ class ComplexDecoder(nn.Module):
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         # hack to get sampling on the GPU
-        self.N.loc = self.N.loc.to(gpu_id) 
-        self.N.scale = self.N.scale.to(gpu_id)
+        #self.N.loc = self.N.loc.to(gpu_id) 
+        #self.N.scale = self.N.scale.to(gpu_id)
+        self.gpu_id = gpu_id
 
     def forward(self, x):
         x = self.dense_block(x)
         x = self.sub_pixel(x)
         x = self.prelu(self.norm(x))
         x = self.conv(x)
-        #x = self.out(x.permute(0,1,3,2))
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
-        #print(x.shape)
         x_mu = self.out_mu(x.permute(0,1,3,2))
         x_sigma = self.out_sigma(x.permute(0,1,3,2))
-        x = x_mu + x_sigma * self.N.sample(x_mu.shape)
-        #print(x.shape)
-        #x = self.prelu_out(x)
+        x = x_mu + x_sigma * self.N.sample(x_mu.shape).to(self.gpu_id)
         return x.permute(0, 1, 2, 3)
 
 
@@ -211,7 +208,6 @@ class TSCNet(nn.Module):
         ).unsqueeze(1)
         x_in = torch.cat([mag, x], dim=1)
 
-        
         out_1 = self.dense_encoder(x_in)
         out_2 = self.TSCB_1(out_1)
         out_3 = self.TSCB_2(out_2)
@@ -221,7 +217,7 @@ class TSCNet(nn.Module):
         #Sample mask from the output distribution k times and take the average.
         masks = []
         complex_outs = []
-        for i in range(k):
+        for _ in range(k):
             mask = self.mask_decoder(out_5)
             complex_out = self.complex_decoder(out_5)
             masks.append(mask)
