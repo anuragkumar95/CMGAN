@@ -120,7 +120,7 @@ class SPConvTranspose2d(nn.Module):
 
 
 class MaskDecoder(nn.Module):
-    def __init__(self, num_features, num_channel=64, out_channel=1, signal_window=51):
+    def __init__(self, num_features, num_channel=64, out_channel=1, signal_window=51, gpu_id=None):
         super(MaskDecoder, self).__init__()
         self.dense_block = DilatedDenseNet(depth=4, in_channels=num_channel)
         self.sub_pixel = SPConvTranspose2d(num_channel, num_channel, (1, 3), 2)
@@ -135,8 +135,8 @@ class MaskDecoder(nn.Module):
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         # hack to get sampling on the GPU
-        #self.N.loc = self.N.loc.cuda() 
-        #self.N.scale = self.N.scale.cuda()
+        self.N.loc = self.N.loc.to(gpu_id) 
+        self.N.scale = self.N.scale.to(gpu_id)
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -166,6 +166,9 @@ class ComplexDecoder(nn.Module):
         self.out_mu = nn.Linear(signal_window, 1)
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
+        # hack to get sampling on the GPU
+        self.N.loc = self.N.loc.to(gpu_id) 
+        self.N.scale = self.N.scale.to(gpu_id)
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -185,7 +188,7 @@ class ComplexDecoder(nn.Module):
 
 
 class TSCNet(nn.Module):
-    def __init__(self, num_channel=64, num_features=201, win_len=51):
+    def __init__(self, num_channel=64, num_features=201, win_len=51, gpu_id=None):
         super(TSCNet, self).__init__()
         self.dense_encoder = DenseEncoder(in_channel=3, channels=num_channel)
 
@@ -195,9 +198,9 @@ class TSCNet(nn.Module):
         self.TSCB_4 = TSCB(num_channel=num_channel)
 
         self.mask_decoder = MaskDecoder(
-            num_features, num_channel=num_channel, out_channel=1, signal_window=win_len
+            num_features, num_channel=num_channel, out_channel=1, signal_window=win_len, gpu_id=gpu_id
         )
-        self.complex_decoder = ComplexDecoder(num_channel=num_channel, signal_window=win_len)
+        self.complex_decoder = ComplexDecoder(num_channel=num_channel, signal_window=win_len, gpu_id=gpu_id)
 
     def forward(self, x, k=1):
         mag = torch.sqrt(x[:, 0, :, :] ** 2 + x[:, 1, :, :] ** 2).unsqueeze(1)
