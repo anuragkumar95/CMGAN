@@ -291,6 +291,10 @@ class Trainer:
         noisy_win_stack = torch.zeros(1, batch, ch, win_len+1, freq)
         clean_win_real_stack = torch.zeros(1, batch, 1, freq, win_len+1)
         clean_win_imag_stack = torch.zeros(1, batch, 1, freq, win_len+1)
+        if self.gpu_id is not None:
+            noisy_win_stack = noisy_win_stack.to(self.gpu_id)
+            clean_win_real_stack = clean_win_real_stack.to(self.gpu_id)
+            clean_win_imag_stack = clean_win_imag_stack.to(self.gpu_id)
         
         for i in range(time):
             if i < win_len//2:
@@ -476,11 +480,17 @@ class Trainer:
         noisy_win_stack = torch.zeros(1, batch, ch, win_len+1, freq)
         clean_win_real_stack = torch.zeros(1, batch, 1, freq, win_len+1)
         clean_win_imag_stack = torch.zeros(1, batch, 1, freq, win_len+1)
-        
+        if self.gpu_id is not None:
+            noisy_win_stack = noisy_win_stack.to(self.gpu_id)
+            clean_win_real_stack = clean_win_real_stack.to(self.gpu_id)
+            clean_win_imag_stack = clean_win_imag_stack.to(self.gpu_id)
+
         for i in range(time):
             if i < win_len//2:
                 pad_len = (win_len//2) - i
                 pad = torch.zeros(batch, ch, pad_len, freq)
+                if self.gpu_id is not None:
+                    pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
                 c_frame = clean_spec[:,:, :, :i + (win_len//2)+1]
                 n_frame = torch.cat([pad, n_frame], dim=2)
@@ -490,6 +500,8 @@ class Trainer:
             elif i > time - 1 - win_len:
                 pad_len = win_len - (time - 1 - i)
                 pad = torch.zeros(batch, ch, pad_len, freq)
+                if self.gpu_id is not None:
+                    pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:, :, i:, :]
                 c_frame = clean_spec[:, :, :, i:]
                 n_frame = torch.cat([n_frame, pad], dim=2)
