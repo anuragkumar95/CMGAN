@@ -55,11 +55,14 @@ class Trainer:
         self.test_ds = test_ds
         self.win_len=win_len
         self.samples = samples
-        self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1, win_len=self.win_len+1)#.cuda()
+        self.model = TSCNet(num_channel=64, 
+                            num_features=self.n_fft // 2 + 1, 
+                            win_len=self.win_len+1, 
+                            gpu_id=gpu_id)
         #summary(
         #    self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
         #)
-        self.discriminator = discriminator.Discriminator(ndf=16)#.cuda()
+        self.discriminator = discriminator.Discriminator(ndf=16)
         #summary(
         #    self.discriminator,
         #    [

@@ -155,7 +155,7 @@ class MaskDecoder(nn.Module):
 
 
 class ComplexDecoder(nn.Module):
-    def __init__(self, num_channel=64, signal_window=51):
+    def __init__(self, num_channel=64, signal_window=51, gpu_id=None):
         super(ComplexDecoder, self).__init__()
         self.dense_block = DilatedDenseNet(depth=4, in_channels=num_channel)
         self.sub_pixel = SPConvTranspose2d(num_channel, num_channel, (1, 3), 2)
