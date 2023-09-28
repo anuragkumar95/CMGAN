@@ -171,7 +171,7 @@ class Trainer:
             en = st + self.n_fft
             #Account for zero pading
             aud_pad = torch.zeros(b, self.n_fft)
-            if self.gpu_is is not None:
+            if self.gpu_id is not None:
                 aud_pad = aud_pad.to(self.gpu_id)
             clean_aud = torch.cat([aud_pad, clean[:, st:en], aud_pad], dim=-1)
             
