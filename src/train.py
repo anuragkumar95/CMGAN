@@ -725,7 +725,7 @@ def main(rank: int, world_size: int, args):
         print(f"Available gpus:{available_gpus}")
     #print("AAAA")
     train_ds, test_ds = dataloader.load_data(
-        args.data_dir, args.batch_size, 2, args.cut_len
+        args.data_dir, args.batch_size, 1, args.cut_len
     )
     print(f"Train:{len(train_ds)}, Test:{len(test_ds)}")
     trainer = Trainer(train_ds, test_ds, args.win_len, args.samples, rank)
