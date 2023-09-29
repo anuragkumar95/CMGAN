@@ -389,7 +389,7 @@ class Trainer:
 
             if (i+1) % loss_step == 0:
                 st = (i+1) // loss_step
-                en = min(st+20, clean_spec.shape[3])
+                en = min(st+loss_step, clean_spec.shape[-1])
 
                 outputs['est_real'] = torch.stack(outputs['est_real'], dim=3).squeeze(4)
                 outputs['est_imag'] = torch.stack(outputs['est_imag'], dim=2).squeeze(4)
