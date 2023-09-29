@@ -399,6 +399,7 @@ class Trainer:
                 outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, st:en]**2 + clean_spec[:, 1, :, st:en]**2).unsqueeze(1)
                 outputs['est_audio'] = torch.stack(outputs['est_audio'], dim=-1)
                 outputs['clean'] = clean[:, st * self.hop: (st * self.hop) + (loss_step * self.n_fft)]
+                outputs['one_labels'] = one_labels
 
 
                 loss = self.calculate_generator_loss2(outputs, samples=self.samples)
