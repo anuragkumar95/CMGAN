@@ -1,0 +1,57 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+INFO:root:GPU: None, Epoch 0, Step 0, loss: 0.5074789524078369, disc_loss: 0.31126290559768677
+est_real:torch.Size([2, 1, 12, 201]), est_imag:torch.Size([2, 1, 12, 201]), est_mag:torch.Size([2, 1, 12, 201])
+Audio: torch.Size([2, 32000]) torch.Size([2, 1100])
+PESQ:tensor([-0.5714, -0.5714]), PESQ MASK:tensor([0., 0.])
+GPU: None, Epoch 0, Step 0, loss: 0.5074789524078369, disc_loss: 0.31126290559768677
+est_real:torch.Size([2, 1, 12, 201]), est_imag:torch.Size([2, 1, 12, 201]), est_mag:torch.Size([2, 1, 12, 201])
+Audio: torch.Size([2, 32000]) torch.Size([2, 1100])
+PESQ:tensor([-0.5714, -0.5714]), PESQ MASK:tensor([0., 0.])
+GPU: None, Epoch 0, Step 1, loss: 0.07302271574735641, disc_loss: 0.06795679032802582
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 798, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 789, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 702, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 369, in train_step2
+    for i, outputs in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :],
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 150, in forward_generator_step2
+    est_real, est_imag = self.model(mini_batch, k=samples)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 207, in forward
+    out_5 = self.TSCB_4(out_4)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 95, in forward
+    x_t = self.time_conformer(x_t) + x_t
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 220, in forward
+    x = self.ff2(x) + x
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 61, in forward
+    return self.fn(x, **kwargs) * self.scale
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 72, in forward
+    return self.fn(x, **kwargs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 148, in forward
+    return self.net(x)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/container.py", line 141, in forward
+    input = module(input)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 27, in forward
+    return x * x.sigmoid()
+KeyboardInterrupt

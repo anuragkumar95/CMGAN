@@ -1,0 +1,200 @@
+2023-09-29 12:19:31,554 INFO    StreamThr :25858 [internal.py:wandb_internal():86] W&B internal server running at pid: 25858, started at: 2023-09-29 12:19:31.554100
+2023-09-29 12:19:31,556 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status
+2023-09-29 12:19:31,557 INFO    WriterThread:25858 [datastore.py:open_for_write():85] open: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/run-i5kzfql2.wandb
+2023-09-29 12:19:31,558 DEBUG   SenderThread:25858 [sender.py:send():380] send: header
+2023-09-29 12:19:31,570 DEBUG   SenderThread:25858 [sender.py:send():380] send: run
+2023-09-29 12:19:32,073 INFO    SenderThread:25858 [dir_watcher.py:__init__():211] watching files in: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files
+2023-09-29 12:19:32,073 INFO    SenderThread:25858 [sender.py:_start_run_threads():1122] run started: i5kzfql2 with start time 1696004371.554587
+2023-09-29 12:19:32,084 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: check_version
+2023-09-29 12:19:32,085 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: check_version
+2023-09-29 12:19:32,297 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: run_start
+2023-09-29 12:19:32,305 DEBUG   HandlerThread:25858 [system_info.py:__init__():32] System info init
+2023-09-29 12:19:32,306 DEBUG   HandlerThread:25858 [system_info.py:__init__():47] System info init done
+2023-09-29 12:19:32,306 INFO    HandlerThread:25858 [system_monitor.py:start():181] Starting system monitor
+2023-09-29 12:19:32,306 INFO    SystemMonitor:25858 [system_monitor.py:_start():145] Starting system asset monitoring threads
+2023-09-29 12:19:32,307 INFO    HandlerThread:25858 [system_monitor.py:probe():201] Collecting system info
+2023-09-29 12:19:32,307 INFO    SystemMonitor:25858 [interfaces.py:start():190] Started cpu monitoring
+2023-09-29 12:19:32,309 DEBUG   HandlerThread:25858 [system_info.py:probe():196] Probing system
+2023-09-29 12:19:32,309 INFO    SystemMonitor:25858 [interfaces.py:start():190] Started disk monitoring
+2023-09-29 12:19:32,310 INFO    SystemMonitor:25858 [interfaces.py:start():190] Started memory monitoring
+2023-09-29 12:19:32,311 INFO    SystemMonitor:25858 [interfaces.py:start():190] Started network monitoring
+2023-09-29 12:19:32,317 DEBUG   HandlerThread:25858 [system_info.py:_probe_git():181] Probing git
+2023-09-29 12:19:32,338 DEBUG   HandlerThread:25858 [system_info.py:_probe_git():189] Probing git done
+2023-09-29 12:19:32,338 DEBUG   HandlerThread:25858 [system_info.py:probe():244] Probing system done
+2023-09-29 12:19:32,338 DEBUG   HandlerThread:25858 [system_monitor.py:probe():210] {'os': 'macOS-10.16-x86_64-i386-64bit', 'python': '3.9.18', 'heartbeatAt': '2023-09-29T16:19:32.309568', 'startedAt': '2023-09-29T16:19:31.549658', 'docker': None, 'cuda': None, 'args': ('--data_dir', '../../Voicebank-debug', '--batch_size', '2', '--win_len', '16', '--samples', '5', '--exp', 'se-debug'), 'state': 'running', 'program': '/Users/anuragkumar/Anurag/CMGAN/src/train.py', 'codePathLocal': 'train.py', 'codePath': 'src/train.py', 'git': {'remote': 'git@github.com:anuragkumar95/CMGAN.git', 'commit': 'e1378623bf3f38023107e6580e742803fd7a858f'}, 'email': None, 'root': '/Users/anuragkumar/Anurag/CMGAN', 'host': 'Anurags-MBP.lan', 'username': 'anuragkumar', 'executable': '/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/bin/python', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 2400, 'min': 2400, 'max': 2400}, 'cpu_freq_per_core': [{'current': 2400, 'min': 2400, 'max': 2400}], 'disk': {'/': {'total': 931.546989440918, 'used': 8.536766052246094}}, 'memory': {'total': 32.0}}
+2023-09-29 12:19:32,338 INFO    HandlerThread:25858 [system_monitor.py:probe():211] Finished collecting system info
+2023-09-29 12:19:32,338 INFO    HandlerThread:25858 [system_monitor.py:probe():214] Publishing system info
+2023-09-29 12:19:32,338 DEBUG   HandlerThread:25858 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-09-29 12:19:32,339 DEBUG   HandlerThread:25858 [system_info.py:_save_pip():68] Saving pip packages done
+2023-09-29 12:19:32,339 DEBUG   HandlerThread:25858 [system_info.py:_save_conda():75] Saving list of conda packages installed into the current environment
+2023-09-29 12:19:33,076 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_created():271] file/dir created: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/conda-environment.yaml
+2023-09-29 12:19:33,076 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_created():271] file/dir created: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/requirements.txt
+2023-09-29 12:19:34,496 DEBUG   HandlerThread:25858 [system_info.py:_save_conda():87] Saving conda packages done
+2023-09-29 12:19:34,497 INFO    HandlerThread:25858 [system_monitor.py:probe():216] Finished publishing system info
+2023-09-29 12:19:34,500 DEBUG   SenderThread:25858 [sender.py:send():380] send: files
+2023-09-29 12:19:34,500 INFO    SenderThread:25858 [sender.py:_save_file():1378] saving file wandb-metadata.json with policy now
+2023-09-29 12:19:34,507 DEBUG   SenderThread:25858 [sender.py:send():380] send: telemetry
+2023-09-29 12:19:34,509 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: stop_status
+2023-09-29 12:19:34,510 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: stop_status
+2023-09-29 12:19:34,511 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: internal_messages
+2023-09-29 12:19:35,001 INFO    wandb-upload_0:25858 [upload_job.py:push():131] Uploaded file /var/folders/h6/6w1fv4ks2hq54txlt9l2ygy00000gn/T/tmpso0ko3xawandb/7awk9jii-wandb-metadata.json
+2023-09-29 12:19:35,081 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_modified():288] file/dir modified: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/conda-environment.yaml
+2023-09-29 12:19:35,081 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_created():271] file/dir created: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/wandb-metadata.json
+2023-09-29 12:19:36,084 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_created():271] file/dir created: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log
+2023-09-29 12:19:37,047 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:19:38,089 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_modified():288] file/dir modified: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log
+2023-09-29 12:19:40,092 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_modified():288] file/dir modified: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log
+2023-09-29 12:19:42,558 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:19:47,566 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:19:49,509 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: stop_status
+2023-09-29 12:19:49,510 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: internal_messages
+2023-09-29 12:19:49,510 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: stop_status
+2023-09-29 12:19:52,790 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:19:57,806 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:20:02,817 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:20:03,150 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_modified():288] file/dir modified: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/config.yaml
+2023-09-29 12:20:04,510 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: stop_status
+2023-09-29 12:20:04,510 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: internal_messages
+2023-09-29 12:20:04,510 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: stop_status
+2023-09-29 12:20:08,660 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:20:11,040 DEBUG   SenderThread:25858 [sender.py:send():380] send: exit
+2023-09-29 12:20:11,040 INFO    SenderThread:25858 [sender.py:send_exit():585] handling exit code: 1
+2023-09-29 12:20:11,040 INFO    SenderThread:25858 [sender.py:send_exit():587] handling runtime: 38
+2023-09-29 12:20:11,041 INFO    SenderThread:25858 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-09-29 12:20:11,041 INFO    SenderThread:25858 [sender.py:send_exit():593] send defer
+2023-09-29 12:20:11,041 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,041 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 0
+2023-09-29 12:20:11,042 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,042 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 0
+2023-09-29 12:20:11,042 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 1
+2023-09-29 12:20:11,042 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,042 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 1
+2023-09-29 12:20:11,043 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,043 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 1
+2023-09-29 12:20:11,043 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 2
+2023-09-29 12:20:11,043 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,043 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 2
+2023-09-29 12:20:11,043 INFO    HandlerThread:25858 [system_monitor.py:finish():190] Stopping system monitor
+2023-09-29 12:20:11,043 DEBUG   SystemMonitor:25858 [system_monitor.py:_start():159] Starting system metrics aggregation loop
+2023-09-29 12:20:11,043 INFO    HandlerThread:25858 [interfaces.py:finish():202] Joined cpu monitor
+2023-09-29 12:20:11,043 DEBUG   SystemMonitor:25858 [system_monitor.py:_start():166] Finished system metrics aggregation loop
+2023-09-29 12:20:11,043 INFO    HandlerThread:25858 [interfaces.py:finish():202] Joined disk monitor
+2023-09-29 12:20:11,044 DEBUG   SystemMonitor:25858 [system_monitor.py:_start():170] Publishing last batch of metrics
+2023-09-29 12:20:11,044 INFO    HandlerThread:25858 [interfaces.py:finish():202] Joined memory monitor
+2023-09-29 12:20:11,044 INFO    HandlerThread:25858 [interfaces.py:finish():202] Joined network monitor
+2023-09-29 12:20:11,044 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,045 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 2
+2023-09-29 12:20:11,045 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 3
+2023-09-29 12:20:11,045 DEBUG   SenderThread:25858 [sender.py:send():380] send: stats
+2023-09-29 12:20:11,045 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,045 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 3
+2023-09-29 12:20:11,045 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,045 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 3
+2023-09-29 12:20:11,045 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 4
+2023-09-29 12:20:11,045 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,045 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 4
+2023-09-29 12:20:11,046 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,046 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 4
+2023-09-29 12:20:11,046 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 5
+2023-09-29 12:20:11,046 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,046 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 5
+2023-09-29 12:20:11,046 DEBUG   SenderThread:25858 [sender.py:send():380] send: summary
+2023-09-29 12:20:11,046 INFO    SenderThread:25858 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-09-29 12:20:11,046 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,047 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 5
+2023-09-29 12:20:11,047 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 6
+2023-09-29 12:20:11,047 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,047 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 6
+2023-09-29 12:20:11,047 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,047 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 6
+2023-09-29 12:20:11,047 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 7
+2023-09-29 12:20:11,047 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: status_report
+2023-09-29 12:20:11,047 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:11,047 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 7
+2023-09-29 12:20:11,047 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:11,048 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 7
+2023-09-29 12:20:11,166 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_created():271] file/dir created: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/wandb-summary.json
+2023-09-29 12:20:12,041 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: poll_exit
+2023-09-29 12:20:12,084 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 8
+2023-09-29 12:20:12,084 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: poll_exit
+2023-09-29 12:20:12,084 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:12,084 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 8
+2023-09-29 12:20:12,084 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:12,085 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 8
+2023-09-29 12:20:12,085 INFO    SenderThread:25858 [job_builder.py:build():281] Attempting to build job artifact
+2023-09-29 12:20:12,085 INFO    SenderThread:25858 [job_builder.py:_get_source_type():393] is repo sourced job
+2023-09-29 12:20:12,087 INFO    SenderThread:25858 [job_builder.py:build():369] adding wandb-job metadata file
+2023-09-29 12:20:12,090 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 9
+2023-09-29 12:20:12,090 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:12,090 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 9
+2023-09-29 12:20:12,090 DEBUG   SenderThread:25858 [sender.py:send():380] send: artifact
+2023-09-29 12:20:12,170 INFO    Thread-12 :25858 [dir_watcher.py:_on_file_modified():288] file/dir modified: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log
+2023-09-29 12:20:13,043 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: poll_exit
+2023-09-29 12:20:13,113 INFO    wandb-upload_1:25858 [upload_job.py:push():89] Uploaded file /Users/anuragkumar/Library/Application Support/wandb/artifacts/staging/tmpl7yrinju
+2023-09-29 12:20:13,125 INFO    wandb-upload_0:25858 [upload_job.py:push():89] Uploaded file /Users/anuragkumar/Library/Application Support/wandb/artifacts/staging/tmpvixeeh86
+2023-09-29 12:20:13,938 INFO    SenderThread:25858 [sender.py:send_artifact():1456] sent artifact job-git_github.com_anuragkumar95_CMGAN.git_src_train.py - {'id': 'QXJ0aWZhY3Q6NTg4NzU3NzMx', 'state': 'PENDING', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjEwMjQ3NzQxNQ==', 'latestArtifact': None}}
+2023-09-29 12:20:13,938 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:13,938 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 9
+2023-09-29 12:20:13,938 INFO    SenderThread:25858 [dir_watcher.py:finish():358] shutting down directory watcher
+2023-09-29 12:20:14,173 INFO    SenderThread:25858 [dir_watcher.py:finish():388] scan: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files
+2023-09-29 12:20:14,174 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/requirements.txt requirements.txt
+2023-09-29 12:20:14,174 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log output.log
+2023-09-29 12:20:14,177 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/config.yaml config.yaml
+2023-09-29 12:20:14,177 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/wandb-summary.json wandb-summary.json
+2023-09-29 12:20:14,181 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/conda-environment.yaml conda-environment.yaml
+2023-09-29 12:20:14,182 INFO    SenderThread:25858 [dir_watcher.py:finish():402] scan save: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/wandb-metadata.json wandb-metadata.json
+2023-09-29 12:20:14,183 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 10
+2023-09-29 12:20:14,183 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: poll_exit
+2023-09-29 12:20:14,186 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:14,187 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 10
+2023-09-29 12:20:14,187 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:14,187 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 10
+2023-09-29 12:20:14,187 INFO    SenderThread:25858 [file_pusher.py:finish():175] shutting down file pusher
+2023-09-29 12:20:14,437 INFO    wandb-upload_1:25858 [upload_job.py:push():131] Uploaded file /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/requirements.txt
+2023-09-29 12:20:14,605 INFO    wandb-upload_0:25858 [upload_job.py:push():131] Uploaded file /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/output.log
+2023-09-29 12:20:14,779 INFO    wandb-upload_3:25858 [upload_job.py:push():131] Uploaded file /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/wandb-summary.json
+2023-09-29 12:20:14,797 INFO    wandb-upload_4:25858 [upload_job.py:push():131] Uploaded file /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/conda-environment.yaml
+2023-09-29 12:20:14,839 INFO    wandb-upload_2:25858 [upload_job.py:push():131] Uploaded file /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/files/config.yaml
+2023-09-29 12:20:15,042 INFO    Thread-11 :25858 [sender.py:transition_state():613] send defer: 11
+2023-09-29 12:20:15,043 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:15,044 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 11
+2023-09-29 12:20:15,044 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:15,044 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 11
+2023-09-29 12:20:15,045 INFO    SenderThread:25858 [file_pusher.py:join():181] waiting for file pusher
+2023-09-29 12:20:15,045 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 12
+2023-09-29 12:20:15,045 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:15,045 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 12
+2023-09-29 12:20:15,046 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:15,046 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 12
+2023-09-29 12:20:15,046 INFO    SenderThread:25858 [file_stream.py:finish():595] file stream finish called
+2023-09-29 12:20:15,135 INFO    SenderThread:25858 [file_stream.py:finish():599] file stream finish is done
+2023-09-29 12:20:15,136 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 13
+2023-09-29 12:20:15,136 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:15,136 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 13
+2023-09-29 12:20:15,136 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:15,136 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 13
+2023-09-29 12:20:15,137 INFO    SenderThread:25858 [sender.py:transition_state():613] send defer: 14
+2023-09-29 12:20:15,137 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: defer
+2023-09-29 12:20:15,137 INFO    HandlerThread:25858 [handler.py:handle_request_defer():170] handle defer: 14
+2023-09-29 12:20:15,137 DEBUG   SenderThread:25858 [sender.py:send():380] send: final
+2023-09-29 12:20:15,138 DEBUG   SenderThread:25858 [sender.py:send():380] send: footer
+2023-09-29 12:20:15,138 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: defer
+2023-09-29 12:20:15,138 INFO    SenderThread:25858 [sender.py:send_request_defer():609] handle sender defer: 14
+2023-09-29 12:20:15,138 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: poll_exit
+2023-09-29 12:20:15,139 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: poll_exit
+2023-09-29 12:20:15,139 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: server_info
+2023-09-29 12:20:15,139 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: server_info
+2023-09-29 12:20:15,141 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: get_summary
+2023-09-29 12:20:15,142 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: sampled_history
+2023-09-29 12:20:15,143 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: internal_messages
+2023-09-29 12:20:15,143 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: job_info
+2023-09-29 12:20:15,203 DEBUG   SenderThread:25858 [sender.py:send_request():407] send_request: job_info
+2023-09-29 12:20:15,203 INFO    MainThread:25858 [wandb_run.py:_footer_history_summary_info():3554] rendering history
+2023-09-29 12:20:15,203 INFO    MainThread:25858 [wandb_run.py:_footer_history_summary_info():3586] rendering summary
+2023-09-29 12:20:15,203 INFO    MainThread:25858 [wandb_run.py:_footer_sync_info():3513] logging synced files
+2023-09-29 12:20:15,204 DEBUG   HandlerThread:25858 [handler.py:handle_request():144] handle_request: shutdown
+2023-09-29 12:20:15,204 INFO    HandlerThread:25858 [handler.py:finish():844] shutting down handler
+2023-09-29 12:20:16,147 INFO    WriterThread:25858 [datastore.py:close():294] close: /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_121931-i5kzfql2/run-i5kzfql2.wandb
+2023-09-29 12:20:16,205 INFO    SenderThread:25858 [sender.py:finish():1534] shutting down sender
+2023-09-29 12:20:16,205 INFO    SenderThread:25858 [file_pusher.py:finish():175] shutting down file pusher
+2023-09-29 12:20:16,205 INFO    SenderThread:25858 [file_pusher.py:join():181] waiting for file pusher

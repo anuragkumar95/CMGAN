@@ -1,0 +1,36 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+Generator loop step:0 Loss:0.2148951292037964
+Generator loop step:1 Loss:0.22283998131752014
+Generator loop step:2 Loss:0.23516643047332764
+Generator loop step:3 Loss:0.181308776140213
+Generator loop step:4 Loss:0.1642870008945465
+Generator loop step:5 Loss:0.26486682891845703
+Generator loop step:6 Loss:0.36337536573410034
+Generator loop step:7 Loss:0.4066818356513977
+Generator loop step:8 Loss:0.4781014323234558
+Generator loop step:9 Loss:0.44139495491981506
+Generator loop step:10 Loss:0.40055903792381287
+Generator loop step:11 Loss:0.41719454526901245
+est_real:torch.Size([2, 1, 12, 201]), est_imag:torch.Size([2, 1, 12, 201]), est_mag:torch.Size([2, 1, 12, 201])
+clean_real:torch.Size([2, 1, 201, 321]), clean_mag:torch.Size([2, 1, 201, 321])
+Audio: torch.Size([2, 32000]) torch.Size([2, 1100])
+PESQ:tensor([-0.5714, -0.5714]), PESQ MASK:tensor([0., 0.])
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 803, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 794, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 707, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 463, in train_step2
+    discrim_loss_metric, pesq_score = self.calculate_discriminator_loss(generator_outputs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 278, in calculate_discriminator_loss
+    predict_enhance_metric = self.discriminator(
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/discriminator.py", line 68, in forward
+    xy = torch.cat([x, y], dim=1)
+RuntimeError: Sizes of tensors must match except in dimension 1. Expected size 321 but got size 12 for tensor number 1 in the list.

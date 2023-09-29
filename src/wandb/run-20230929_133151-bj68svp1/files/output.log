@@ -1,0 +1,67 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+Generator loop step:0 Loss:0.8036640286445618
+Generator loop step:1 Loss:0.8786724209785461
+Generator loop step:2 Loss:0.636591911315918
+Generator loop step:3 Loss:0.5179390907287598
+Generator loop step:4 Loss:0.47724252939224243
+Generator loop step:5 Loss:0.5057411193847656
+Generator loop step:6 Loss:0.4787232279777527
+Generator loop step:7 Loss:0.4402090013027191
+Generator loop step:8 Loss:0.4481896460056305
+Generator loop step:9 Loss:0.4978254437446594
+Generator loop step:10 Loss:0.5243938565254211
+Generator loop step:11 Loss:0.565707802772522
+est_real:torch.Size([2, 1, 12, 201]), est_imag:torch.Size([2, 1, 12, 201]), est_mag:torch.Size([2, 1, 12, 201])
+clean_real:torch.Size([2, 1, 201, 12]), clean_mag:torch.Size([2, 1, 201, 12])
+Audio: torch.Size([2, 32000]) torch.Size([2, 1100])
+PESQ:tensor([-0.5714, -0.5714]), PESQ MASK:tensor([0., 0.])
+GPU: None, Epoch 0, Step 0, loss: 0.565707802772522, disc_loss: 0.36397653818130493
+INFO:root:GPU: None, Epoch 0, Step 0, loss: 0.565707802772522, disc_loss: 0.36397653818130493
+Generator loop step:0 Loss:0.5310903787612915
+Generator loop step:1 Loss:0.6773196458816528
+Generator loop step:2 Loss:0.5798145532608032
+Generator loop step:3 Loss:0.5566372871398926
+Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7feb182461f0>
+Traceback (most recent call last):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1328, in __del__
+    self._shutdown_workers()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1301, in _shutdown_workers
+    w.join(timeout=_utils.MP_STATUS_CHECK_INTERVAL)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/popen_fork.py", line 40, in wait
+    if not wait([self.sentinel], timeout):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/connection.py", line 931, in wait
+    ready = selector.select(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt:
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 803, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 794, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 707, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 370, in train_step2
+    for i, outputs in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :],
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 150, in forward_generator_step2
+    est_real, est_imag = self.model(mini_batch, k=samples)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 214, in forward
+    complex_out = self.complex_decoder(out_5)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 169, in forward
+    x = self.prelu(self.norm(x))
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/activation.py", line 1076, in forward
+    return F.prelu(input, self.weight)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/functional.py", line 1500, in prelu
+    return torch.prelu(input, weight)
+KeyboardInterrupt
