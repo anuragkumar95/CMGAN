@@ -400,8 +400,8 @@ class Trainer:
             wandb.log({"Generator_loss": loss,
                        "Generator_step": i}) 
 
-        est_spec_uncompress = power_uncompress(generator_outputs['est_real'].mean(dim=0), 
-                                               generator_outputs['est_imag'].mean(dim=0)).squeeze(1)
+        est_spec_uncompress = power_uncompress(generator_outputs['est_real'], 
+                                               generator_outputs['est_imag']).squeeze(1)
         
         est_audio = torch.istft(
                     est_spec_uncompress.permute(0,2,1,3),
@@ -426,7 +426,7 @@ class Trainer:
             discrim_loss_metric = torch.tensor([0.0])
 
     
-        yield loss.item(), discrim_loss_metric.item(), pesq_score.item()
+        yield loss.item(), discrim_loss_metric.item(), pesq_score.mean().item()
 
 
     def train_step(self, batch):
@@ -582,10 +582,21 @@ class Trainer:
                                                             outputs['clean_mag']],
                                                             dim=-1)
         
+        est_spec_uncompress = power_uncompress(generator_outputs['est_real'], 
+                                               generator_outputs['est_imag']).squeeze(1)
         
-        generator_outputs["one_labels"] = one_labels
-        generator_outputs["clean"] = clean
-
+        est_audio = torch.istft(
+                    est_spec_uncompress.permute(0,2,1,3),
+                    self.n_fft,
+                    self.hop,
+                    window=torch.hamming_window(self.n_fft).to(self.gpu_id),
+                    onesided=True,
+                )
+        
+        generator_outputs['est_audio'] = est_audio
+        generator_outputs['clean'] = clean
+        generator_outputs['one_labels'] = one_labels
+ 
         loss = self.calculate_generator_loss(generator_outputs)
 
         discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)

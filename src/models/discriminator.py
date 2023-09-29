@@ -23,7 +23,6 @@ def batch_pesq(clean, noisy):
     for c,n in zip(clean, noisy):
         pesq = pesq_loss(c, n)
         pesq_score.append(pesq)
-    print("Batch PESQ:", pesq_score)
     #Mask invalid pesq scores
     score_mask = np.array([1 if pqs > -1 else 0 for pqs in pesq_score])
     pesq_score = np.array(pesq_score)
