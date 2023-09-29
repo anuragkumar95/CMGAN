@@ -388,9 +388,9 @@ class Trainer:
                 st = (i+1) // loss_step
                 en = min(st+20, clean_spec.shape[3])
 
-                outputs['est_real'] = torch.stack(generator_outputs['est_real'], dim=3).squeeze(4)
-                outputs['est_imag'] = torch.stack(generator_outputs['est_imag'], dim=2).squeeze(4)
-                outputs['est_mag'] = torch.stack(generator_outputs['est_mag'], dim=3).squeeze(4)
+                outputs['est_real'] = torch.stack(outputs['est_real'], dim=3).squeeze(4)
+                outputs['est_imag'] = torch.stack(outputs['est_imag'], dim=2).squeeze(4)
+                outputs['est_mag'] = torch.stack(outputs['est_mag'], dim=3).squeeze(4)
                 outputs['clean_real'] = clean_spec[:, 0, st:en, :].unsqueeze(1)
                 outputs['clean_imag'] = clean_spec[:, 1, st:en, :].unsqueeze(1)
                 outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, st:en, :]**2 + clean_spec[:, 1, st:en, :]**2).unsqueeze(1)
@@ -444,9 +444,9 @@ class Trainer:
         generator_outputs['clean'] = clean
         generator_outputs['one_labels'] = one_labels
 
-        loss = self.calculate_generator_loss(generator_outputs)
+        generator_loss = self.calculate_generator_loss(generator_outputs)
         self.optimizer.zero_grad()
-        loss.backward()
+        generator_loss.backward()
         self.optimizer.step()
 
         print(f"Generator_loss:{loss}")
