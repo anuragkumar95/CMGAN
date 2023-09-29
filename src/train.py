@@ -472,7 +472,7 @@ class Trainer:
         clean = batch[0]
         noisy = batch[1]
         one_labels = torch.ones(args.batch_size)
-        if self.gpu_id:
+        if self.gpu_id is not None:
             clean = batch[0].to(self.gpu_id)
             noisy = batch[1].to(self.gpu_id)
             one_labels = one_labels.to(self.gpu_id)
@@ -538,10 +538,10 @@ class Trainer:
                                                    clean_win_imag_stack[1:, :, :, :, :],
                                                    clean)):
             outputs["one_labels"] = torch.ones(args.batch_size)
-            if self.gpu_id:
+            if self.gpu_id is not None:
                 outputs["one_labels"] =  outputs["one_labels"].to(self.gpu_id)
             
-            loss = self.calculate_generator_loss2(outputs, samples=24)
+            #loss = self.calculate_generator_loss2(outputs, samples=self.samples)
             
             #Store the generator outputs and pass it to the discriminator
             if generator_outputs['est_real'] is None:
@@ -653,7 +653,7 @@ class Trainer:
                     wandb.log({"Train_D_loss": disc_loss,
                                "Train_G_loss": loss,
                                "Train_PESQ": pesq,
-                               "Step": step})
+                               "Train Step": step})
                     print(template.format(self.gpu_id, epoch, step, loss, disc_loss))
                     if (step % args.log_interval) == 0:
                         logging.info(

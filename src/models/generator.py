@@ -128,16 +128,12 @@ class MaskDecoder(nn.Module):
         self.norm = nn.InstanceNorm2d(out_channel, affine=True)
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
-        #self.out = nn.Linear(signal_window, 1)
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
         #Predict mask for the middle frame of window
         self.out_mu = nn.Linear(signal_window, 1)
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
-        # hack to get sampling on the GPU
-        #self.N.loc = self.N.loc.to(gpu_id) 
-        #self.N.scale = self.N.scale.to(gpu_id)
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -162,13 +158,9 @@ class ComplexDecoder(nn.Module):
         self.prelu = nn.PReLU(num_channel)
         self.norm = nn.InstanceNorm2d(num_channel, affine=True)
         self.conv = nn.Conv2d(num_channel, 2, (1, 2))
-        #self.out = nn.Linear(signal_window, 1)
         self.out_mu = nn.Linear(signal_window, 1)
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
-        # hack to get sampling on the GPU
-        #self.N.loc = self.N.loc.to(gpu_id) 
-        #self.N.scale = self.N.scale.to(gpu_id)
         self.gpu_id = gpu_id
 
     def forward(self, x):
