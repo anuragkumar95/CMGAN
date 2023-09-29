@@ -384,6 +384,8 @@ class Trainer:
             outputs['est_mag'].append(output['est_mag'])
             outputs['est_audio'].append(output['est_audio'][..., self.n_fft:-self.n_fft])
 
+            print(f"Generator loop step:{i+1}")
+
             if (i+1) % loss_step == 0:
                 st = (i+1) // loss_step
                 en = min(st+20, clean_spec.shape[3])
