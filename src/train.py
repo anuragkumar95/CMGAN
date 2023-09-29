@@ -233,6 +233,7 @@ class Trainer:
     def calculate_generator_loss2(self, generator_outputs, samples):
         loss = 0
         for k in range(samples):
+        
             predict_fake_metric = self.discriminator(
                 generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["est_mag"][k, ...]
             )
@@ -393,9 +394,9 @@ class Trainer:
                 outputs['est_real'] = torch.stack(outputs['est_real'], dim=3).squeeze(4)
                 outputs['est_imag'] = torch.stack(outputs['est_imag'], dim=2).squeeze(4)
                 outputs['est_mag'] = torch.stack(outputs['est_mag'], dim=3).squeeze(4)
-                outputs['clean_real'] = clean_spec[:, 0, st:en, :].unsqueeze(1)
-                outputs['clean_imag'] = clean_spec[:, 1, st:en, :].unsqueeze(1)
-                outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, st:en, :]**2 + clean_spec[:, 1, st:en, :]**2).unsqueeze(1)
+                outputs['clean_real'] = clean_spec[:, 0, :, st:en].unsqueeze(1)
+                outputs['clean_imag'] = clean_spec[:, 1, :, st:en].unsqueeze(1)
+                outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, st:en]**2 + clean_spec[:, 1, :, st:en]**2).unsqueeze(1)
                 outputs['est_audio'] = torch.stack(outputs['est_audio'], dim=-1)
                 outputs['clean'] = clean[:, st * self.hop: (st * self.hop) + (loss_step * self.n_fft)]
 
