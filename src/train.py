@@ -345,7 +345,6 @@ class Trainer:
             clean_win_imag_stack = torch.cat([clean_win_imag_stack, c_frame[:, 1, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
 
         #Perhaps append to a list and concatenate once will be more optimal?
-        
         generator_outputs = {
             "est_real": [],
             "est_imag": [],
@@ -365,11 +364,6 @@ class Trainer:
             if self.gpu_id is not None:
                 outputs["one_labels"] =  outputs["one_labels"].to(self.gpu_id)
             
-            #loss = self.calculate_generator_loss2(outputs, samples=self.samples)
-            #self.optimizer.zero_grad()
-            #loss.backward()
-            #self.optimizer.step()
-
             #Store the generator outputs and pass it to the discriminator
             generator_outputs['est_real'].append(outputs['est_real'])
             generator_outputs['est_imag'].append(outputs['est_imag'])
@@ -384,12 +378,8 @@ class Trainer:
         generator_outputs['clean_imag'] = clean_spec[:, 1, :, :].unsqueeze(1)
         generator_outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, :]**2 + clean_spec[:, 1, :, :]**2).unsqueeze(1)
         
-        #print(f"est_real:{generator_outputs['est_real'].shape}, est_imag:{generator_outputs['est_imag'].shape}, est_mag:{generator_outputs['est_mag'].shape}") 
-        #print(f"clean_real:{generator_outputs['clean_real'].shape}, clean_mag:{generator_outputs['clean_mag'].shape}")    
-        
         est_spec_uncompress = power_uncompress(generator_outputs['est_real'], 
                                                generator_outputs['est_imag']).squeeze(1).squeeze(2)
-        #print("Uncompressed_shape:",est_spec_uncompress.shape)
         
         win = torch.hamming_window(self.n_fft)
         if self.gpu_id is not None:
@@ -582,11 +572,11 @@ class Trainer:
  
         loss = self.calculate_generator_loss2(generator_outputs)
 
-        discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
+        discrim_loss_metric, pesq_score = self.calculate_discriminator_loss(generator_outputs)
         if discrim_loss_metric is None:
             discrim_loss_metric = torch.tensor([0.0])
 
-        return loss.item(), discrim_loss_metric.item()
+        return loss.item(), discrim_loss_metric.item(), pesq_score.mean().item()
 
 
     @torch.no_grad()
@@ -618,13 +608,17 @@ class Trainer:
         disc_loss_total = 0.0
         for idx, batch in enumerate(self.test_ds):
             step = idx + 1
-            for loss, disc_loss in self.test_step2(batch):
+            for loss, disc_loss, pesq in self.test_step2(batch):
                 gen_loss_total += loss
                 disc_loss_total += disc_loss
         gen_loss_avg = gen_loss_total / step
         disc_loss_avg = disc_loss_total / step
 
         template = "GPU: {}, Generator loss: {}, Discriminator loss: {}"
+        wandb.log({"Test_D_loss": disc_loss_avg,
+                   "Test_G_loss": gen_loss_avg,
+                   "Test_PESQ": pesq,
+                   "Epoch": step})
         print(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
         logging.info(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
 
@@ -717,6 +711,7 @@ class Trainer:
 
 
 def main(rank: int, world_size: int, args):
+    
     ddp_setup(rank, world_size)
     if rank == 0:
         print(args)
@@ -725,6 +720,7 @@ def main(rank: int, world_size: int, args):
         ]
         print(f"Available gpus:{available_gpus}")
     #print("AAAA")
+    
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 1, args.cut_len
     )

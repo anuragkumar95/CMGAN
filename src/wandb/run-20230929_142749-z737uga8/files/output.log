@@ -1,0 +1,142 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+Generator loop step:0
+Generator loop step:1
+Generator loop step:2
+Generator loop step:3
+Generator loop step:4
+Generator loop step:5
+Generator loop step:6
+Generator loop step:7
+Generator loop step:8
+Generator loop step:9
+Generator loop step:10
+Generator loop step:11
+Generator loop step:12
+Generator loop step:13
+Generator loop step:14
+Generator loop step:15
+Generator loop step:16
+Generator loop step:17
+Generator loop step:18
+Generator loop step:19
+Generator loop step:20
+Generator loop step:21
+Generator loop step:22
+Generator loop step:23
+Generator loop step:24
+Generator loop step:25
+Generator loop step:26
+Generator loop step:27
+Generator loop step:28
+Generator loop step:29
+Generator loop step:30
+Generator loop step:31
+Generator loop step:32
+Generator loop step:33
+Generator loop step:34
+Generator loop step:35
+Generator loop step:36
+Generator loop step:37
+Generator loop step:38
+Generator loop step:39
+Generator loop step:40
+Generator loop step:41
+Generator loop step:42
+Generator loop step:43
+Generator loop step:44
+Generator loop step:45
+Generator loop step:46
+Generator loop step:47
+Generator loop step:48
+Generator loop step:49
+Generator loop step:50
+Generator loop step:51
+Generator loop step:52
+Generator loop step:53
+Generator loop step:54
+Generator loop step:55
+Generator loop step:56
+Generator loop step:57
+Generator loop step:58
+Generator loop step:59
+Generator loop step:60
+Generator loop step:61
+Generator loop step:62
+Generator loop step:63
+Generator loop step:64
+Generator loop step:65
+Generator loop step:66
+Generator loop step:67
+Generator loop step:68
+Generator loop step:69
+Generator loop step:70
+Generator loop step:71
+Generator loop step:72
+Generator loop step:73
+Generator loop step:74
+Generator loop step:75
+Generator loop step:76
+Generator loop step:77
+Generator loop step:78
+Generator loop step:79
+Generator loop step:80
+Generator loop step:81
+Generator loop step:82
+Generator loop step:83
+Generator loop step:84
+Generator loop step:85
+Generator loop step:86
+Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7fc3904bbf70>
+Traceback (most recent call last):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1328, in __del__
+    self._shutdown_workers()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1296, in _shutdown_workers
+    self._mark_worker_as_unavailable(worker_id, shutdown=True)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1243, in _mark_worker_as_unavailable
+    q.put(None)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/queues.py", line 86, in put
+    def put(self, obj, block=True, timeout=None):
+KeyboardInterrupt:
+Error in sys.excepthook:
+Traceback (most recent call last):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/traceback.py", line 480, in __init__
+    try:
+KeyboardInterrupt
+Original exception was:
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 738, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 729, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 640, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 359, in train_step2
+    for i, outputs in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :],
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 150, in forward_generator_step2
+    est_real, est_imag = self.model(mini_batch, k=samples)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 206, in forward
+    out_4 = self.TSCB_3(out_3)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/generator.py", line 97, in forward
+    x_f = self.freq_conformer(x_f) + x_f
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 218, in forward
+    x = self.attn(x, mask=mask) + x
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 72, in forward
+    return self.fn(x, **kwargs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/models/conformer.py", line 103, in forward
+    dots = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py", line 327, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+KeyboardInterrupt
