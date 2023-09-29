@@ -9,6 +9,7 @@ import logging
 from torchinfo import summary
 import argparse
 import wandb
+import psutil
 
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -370,7 +371,7 @@ class Trainer:
                 generator_outputs['est_imag'].append(outputs['est_imag'])
                 generator_outputs['est_mag'].append(outputs['est_mag'])
             
-                print(f"Generator loop step:{i}") 
+                print(f"Generator loop step:{i}, RAM:{psutil.vistual_memory().percent}") 
             
             generator_outputs['est_real'] = torch.stack(generator_outputs['est_real'], dim=3).squeeze(4)
             generator_outputs['est_imag'] = torch.stack(generator_outputs['est_imag'], dim=3).squeeze(4)
