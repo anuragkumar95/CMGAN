@@ -384,12 +384,12 @@ class Trainer:
         generator_outputs['clean_imag'] = clean_spec[:, 1, :, :].unsqueeze(1)
         generator_outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, :]**2 + clean_spec[:, 1, :, :]**2).unsqueeze(1)
         
-        print(f"est_real:{generator_outputs['est_real'].shape}, est_imag:{generator_outputs['est_imag'].shape}, est_mag:{generator_outputs['est_mag'].shape}") 
-        print(f"clean_real:{generator_outputs['clean_real'].shape}, clean_mag:{generator_outputs['clean_mag'].shape}")    
+        #print(f"est_real:{generator_outputs['est_real'].shape}, est_imag:{generator_outputs['est_imag'].shape}, est_mag:{generator_outputs['est_mag'].shape}") 
+        #print(f"clean_real:{generator_outputs['clean_real'].shape}, clean_mag:{generator_outputs['clean_mag'].shape}")    
         
         est_spec_uncompress = power_uncompress(generator_outputs['est_real'], 
                                                generator_outputs['est_imag']).squeeze(1).squeeze(2)
-        print("Uncompressed_shape:",est_spec_uncompress.shape)
+        #print("Uncompressed_shape:",est_spec_uncompress.shape)
         
         win = torch.hamming_window(self.n_fft)
         if self.gpu_id is not None:
@@ -526,15 +526,15 @@ class Trainer:
             clean_win_imag_stack = torch.cat([clean_win_imag_stack, c_frame[:, 1, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
 
         generator_outputs = {
-            "est_real": None,
-            "est_imag": None,
-            "est_mag": None,
-            "clean_real": None,
-            "clean_imag": None,
-            "clean_mag": None,
-            "est_audio": None
+            "est_real": [],
+            "est_imag": [],
+            "est_mag": [],
+            "clean_real": [],
+            "clean_imag": [],
+            "clean_mag": [],
+            "est_audio": []
         }
-                
+    
         #Calculate generator loss over window frames and collect outputs. 
         for i, outputs in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :], 
                                                    clean_win_real_stack[1:, :, :, :, :], 
@@ -543,63 +543,44 @@ class Trainer:
             outputs["one_labels"] = torch.ones(args.batch_size)
             if self.gpu_id is not None:
                 outputs["one_labels"] =  outputs["one_labels"].to(self.gpu_id)
-            
-            #loss = self.calculate_generator_loss2(outputs, samples=self.samples)
-            
+
             #Store the generator outputs and pass it to the discriminator
-            if generator_outputs['est_real'] is None:
-                generator_outputs['est_real'] = outputs['est_real'].mean(dim=0)
-            else:
-                generator_outputs['est_real'] = torch.cat([generator_outputs['est_real'], 
-                                                            outputs['est_real'].mean(dim=0)],
-                                                            dim=2)
-            if generator_outputs['est_imag'] is None:
-                generator_outputs['est_imag'] = outputs['est_imag'].mean(dim=0)
-            else:
-                generator_outputs['est_imag'] = torch.cat([generator_outputs['est_imag'], 
-                                                            outputs['est_imag'].mean(dim=0)],
-                                                            dim=2)
-            if generator_outputs['est_mag'] is None:
-                generator_outputs['est_mag'] = outputs['est_mag'].mean(dim=0)
-            else:
-                generator_outputs['est_mag'] = torch.cat([generator_outputs['est_mag'], 
-                                                            outputs['est_mag'].mean(dim=0)],
-                                                            dim=2)
-            if generator_outputs['clean_real'] is None:
-                generator_outputs['clean_real'] = outputs['clean_real']
-            else:
-                generator_outputs['clean_real'] = torch.cat([generator_outputs['clean_real'], 
-                                                            outputs['clean_real']],
-                                                            dim=-1)
-            if generator_outputs['clean_imag'] is None:
-                generator_outputs['clean_imag'] = outputs['clean_imag']
-            else:
-                generator_outputs['clean_imag'] = torch.cat([generator_outputs['clean_imag'], 
-                                                            outputs['clean_imag']],
-                                                            dim=-1)
-            if generator_outputs['clean_mag'] is None:
-                generator_outputs['clean_mag'] = outputs['clean_mag']
-            else:
-                generator_outputs['clean_mag'] = torch.cat([generator_outputs['clean_mag'], 
-                                                            outputs['clean_mag']],
-                                                            dim=-1)
+            generator_outputs['est_real'].append(outputs['est_real'])
+            generator_outputs['est_imag'].append(outputs['est_imag'])
+            generator_outputs['est_mag'].append(outputs['est_mag'])
+           
+        generator_outputs['est_real'] = torch.stack(generator_outputs['est_real'], dim=3).squeeze(4)
+        generator_outputs['est_imag'] = torch.stack(generator_outputs['est_imag'], dim=3).squeeze(4)
+        generator_outputs['est_mag'] = torch.stack(generator_outputs['est_mag'], dim=3).squeeze(4)
+        generator_outputs['clean_real'] = clean_spec[:, 0, :, :].unsqueeze(1)
+        generator_outputs['clean_imag'] = clean_spec[:, 1, :, :].unsqueeze(1)
+        generator_outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, :]**2 + clean_spec[:, 1, :, :]**2).unsqueeze(1)
+       
         
         est_spec_uncompress = power_uncompress(generator_outputs['est_real'], 
-                                               generator_outputs['est_imag']).squeeze(1)
+                                               generator_outputs['est_imag']).squeeze(1).squeeze(2)
+    
+        win = torch.hamming_window(self.n_fft)
+        if self.gpu_id is not None:
+            win = win.to(self.gpu_id)
         
-        est_audio = torch.istft(
-                    est_spec_uncompress.permute(0,2,1,3),
-                    self.n_fft,
-                    self.hop,
-                    window=torch.hamming_window(self.n_fft).to(self.gpu_id),
-                    onesided=True,
-                )
+        est_auds = []
+        for spec in est_spec_uncompress:
+            est_audio = torch.istft(
+                        spec.permute(0,2,1,3),
+                        self.n_fft,
+                        self.hop,
+                        window=win,
+                        onesided=True,
+                    )
+            est_auds.append(est_audio)
+        est_auds = torch.stack(est_auds, dim=0)
         
         generator_outputs['est_audio'] = est_audio
         generator_outputs['clean'] = clean
         generator_outputs['one_labels'] = one_labels
  
-        loss = self.calculate_generator_loss(generator_outputs)
+        loss = self.calculate_generator_loss2(generator_outputs)
 
         discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
         if discrim_loss_metric is None:
