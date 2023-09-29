@@ -255,6 +255,7 @@ class Trainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
+        print("Audio:", generator_outputs['clean'].shape, generator_outputs["est_audio"].shape)
         pesq_mask, pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
         print(f"PESQ:{pesq_score}, PESQ MASK:{pesq_mask}")
         pesq_score = pesq_score.to(self.gpu_id)

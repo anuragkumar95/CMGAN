@@ -16,9 +16,13 @@ def pesq_loss(clean, noisy, sr=16000):
 
 
 def batch_pesq(clean, noisy):
-    pesq_score = Parallel(n_jobs=-1)(
-        delayed(pesq_loss)(c, n) for c, n in zip(clean, noisy)
-    )
+    #pesq_score = Parallel(n_jobs=-1)(
+    #    delayed(pesq_loss)(c, n) for c, n in zip(clean, noisy)
+    #)
+    pesq_score = []
+    for c,n in zip(clean, noisy):
+        pesq = pesq_loss(c, n)
+        pesq_score.append(pesq)
     print("Batch PESQ:", pesq_score)
     #Mask invalid pesq scores
     score_mask = np.array([1 if pqs > -1 else 0 for pqs in pesq_score])
