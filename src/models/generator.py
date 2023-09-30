@@ -129,6 +129,7 @@ class MaskDecoder(nn.Module):
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
+        self.relu = nn.ReLU()
         #Predict mask for the middle frame of window
         self.out_mu = nn.Linear(signal_window, 1)
         self.out_sigma = nn.Linear(signal_window, 1)
@@ -149,10 +150,7 @@ class MaskDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x)
-        x_sigma = self.out_sigma(x)
-        #x = x_mu + x_sigma * self.N.sample(x_mu.shape).to(self.gpu_id)
-        #x = self.prelu_out(x)
-        #return x.permute(0, 2, 1).unsqueeze(1)
+        x_sigma = self.relu(self.out_sigma(x))
         return x_mu, x_sigma
 
 class ComplexDecoder(nn.Module):
@@ -167,10 +165,11 @@ class ComplexDecoder(nn.Module):
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
+        self.relu = nn.RelU()
 
     def sample(self, mu, sigma):
         x = mu + sigma * self.N.sample(mu.shape).to(self.gpu_id)
-        return x#.permute(0, 1, 2, 3)
+        return x
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -180,9 +179,7 @@ class ComplexDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x.permute(0,1,3,2))
-        x_sigma = self.out_sigma(x.permute(0,1,3,2))
-        #x = x_mu + x_sigma * self.N.sample(x_mu.shape).to(self.gpu_id)
-        #return x.permute(0, 1, 2, 3)
+        x_sigma = self.relu(self.out_sigma(x.permute(0,1,3,2)))
         return x_mu, x_sigma
 
 class TSCNet(nn.Module):
@@ -218,9 +215,9 @@ class TSCNet(nn.Module):
         #Sample mask from the output distribution k times and take the average.
         masks = []
         complex_outs = []
-        mask_mu, mask_sigma = self.mask_decoder(out_5)
-        complex_mu, complex_sigma = self.complex_decoder(out_5)
         for _ in range(k):
+            mask_mu, mask_sigma = self.mask_decoder(out_5)
+            complex_mu, complex_sigma = self.complex_decoder(out_5)
             mask = self.mask_decoder.sample(mask_mu, mask_sigma)
             complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
             masks.append(mask)
