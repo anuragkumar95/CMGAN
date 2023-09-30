@@ -740,7 +740,6 @@ class Trainer:
 
 
 def main(rank: int, world_size: int, args):
-    """
     ddp_setup(rank, world_size)
     if rank == 0:
         print(args)
@@ -749,7 +748,7 @@ def main(rank: int, world_size: int, args):
         ]
         print(f"Available gpus:{available_gpus}")
     #print("AAAA")
-    """
+    
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 1, args.cut_len
     )
@@ -763,5 +762,5 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     print(f"World size:{world_size}")
-    #mp.spawn(main, args=(world_size, args), nprocs=world_size)
-    main(None, world_size, args)
+    mp.spawn(main, args=(world_size, args), nprocs=world_size)
+    #main(None, world_size, args)
