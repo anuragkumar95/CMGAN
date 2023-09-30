@@ -165,7 +165,7 @@ class ComplexDecoder(nn.Module):
         self.out_sigma = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
-        self.relu = nn.RelU()
+        self.relu = nn.ReLU()
 
     def sample(self, mu, sigma):
         x = mu + sigma * self.N.sample(mu.shape).to(self.gpu_id)
