@@ -1,0 +1,37 @@
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Current SDK version is 0.15.11
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Configure stats pid to 31407
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Loading settings from /Users/anuragkumar/.config/wandb/settings
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Loading settings from /Users/anuragkumar/Anurag/CMGAN/src/wandb/settings
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'src/train.py', 'program_abspath': '/Users/anuragkumar/Anurag/CMGAN/src/train.py', 'program': '/Users/anuragkumar/Anurag/CMGAN/src/train.py'}
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_init.py:_log_setup():528] Logging user logs to /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_195148-jku5gco3/logs/debug.log
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_init.py:_log_setup():529] Logging internal logs to /Users/anuragkumar/Anurag/CMGAN/src/wandb/run-20230929_195148-jku5gco3/logs/debug-internal.log
+2023-09-29 19:51:48,488 INFO    MainThread:31407 [wandb_init.py:init():568] calling init triggers
+2023-09-29 19:51:48,489 INFO    MainThread:31407 [wandb_init.py:init():575] wandb.init called with sweep_config: {}
+config: {}
+2023-09-29 19:51:48,489 INFO    MainThread:31407 [wandb_init.py:init():618] starting backend
+2023-09-29 19:51:48,489 INFO    MainThread:31407 [wandb_init.py:init():622] setting up manager
+2023-09-29 19:51:48,490 INFO    MainThread:31407 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2023-09-29 19:51:48,491 INFO    MainThread:31407 [wandb_init.py:init():628] backend started and connected
+2023-09-29 19:51:48,493 INFO    MainThread:31407 [wandb_init.py:init():720] updated telemetry
+2023-09-29 19:51:48,505 INFO    MainThread:31407 [wandb_init.py:init():753] communicating run to backend with 90.0 second timeout
+2023-09-29 19:51:48,804 INFO    MainThread:31407 [wandb_run.py:_on_init():2220] communicating current version
+2023-09-29 19:51:48,993 INFO    MainThread:31407 [wandb_run.py:_on_init():2229] got version response 
+2023-09-29 19:51:48,993 INFO    MainThread:31407 [wandb_init.py:init():804] starting run threads in backend
+2023-09-29 19:51:50,756 WARNING MainThread:31407 [wandb_init.py:init():1192] interrupted
+Traceback (most recent call last):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/wandb/sdk/wandb_init.py", line 1170, in init
+    run = wi.init()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/wandb/sdk/wandb_init.py", line 815, in init
+    run_start_result = run_start_handle.wait(timeout=30)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 283, in wait
+    found, abandoned = self._slot._get_and_clear(timeout=wait_timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 130, in _get_and_clear
+    if self._wait(timeout=timeout):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 126, in _wait
+    return self._event.wait(timeout=timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/threading.py", line 581, in wait
+    signaled = self._cond.wait(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/threading.py", line 316, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt

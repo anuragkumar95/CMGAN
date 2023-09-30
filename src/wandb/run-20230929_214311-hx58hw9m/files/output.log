@@ -1,0 +1,19 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+Generator loop step:1
+Generator loop step:2
+Generator loop step:3
+Generator loop step:4
+Generator loop step:5
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 794, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 785, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 696, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 409, in train_step2
+    est_audio = self.estimate_audio(outputs['est_real'][k, ...], outputs['est_imag'][k, ...])
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 154, in estimate_audio
+    est_spec_uncompress = torch.cat([pad, est_spec_uncompress, pad], dim=1)
+RuntimeError: Sizes of tensors must match except in dimension 1. Expected size 5 but got size 201 for tensor number 1 in the list.

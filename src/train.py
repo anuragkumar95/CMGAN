@@ -142,7 +142,32 @@ class Trainer:
             "est_audio": est_audio,
         }
     
-    def forward_generator_step2(self, noisy_stack):#, clean_real_stack, clean_imag_stack, clean):
+
+    def estimate_audio(self, est_real, est_imag, padding=False):
+        b, _, f, _ = est_real.shape
+        est_spec_uncompress = power_uncompress(est_real, est_imag).squeeze(1)
+        #Pad the est_spec on both sides since istft won't work on single frame
+        if padding:
+            pad = torch.zeros(b,1,f,2)
+            if self.gpu_id is not None:
+                pad = pad.to(self.gpu_id)
+            #print(est_spec_uncompress.shape)
+            est_spec_uncompress = torch.cat([pad, est_spec_uncompress, pad], dim=1)
+        
+        win = torch.hamming_window(self.n_fft)
+        if self.gpu_id is not None:
+            win = win.to(self.gpu_id)
+
+        est_audio = torch.istft(
+            est_spec_uncompress.permute(0,2,1,3),
+            self.n_fft,
+            self.hop,
+            window=win,
+            onesided=True,
+        )
+        return est_audio
+    
+    def forward_generator_step2(self, noisy_stack):
         steps, b, _, _, f = noisy_stack.shape
         samples = self.samples
         for idx in range(steps):
@@ -151,51 +176,10 @@ class Trainer:
             est_real, est_imag = self.model(mini_batch, k=samples)
             est_real, est_imag = est_real.permute(0, 1, 2, 4, 3), est_imag.permute(0, 1, 2, 4, 3)
             est_mag = torch.sqrt(est_real**2 + est_imag**2)
-            #clean_mag = torch.sqrt(clean_real_stack[idx, :, :, :, (win_len//2) + 1]**2 + clean_imag_stack[idx, :, :, :, (win_len//2) + 1]**2).unsqueeze(-1)
-
-            est_audios = []
-            for k in range(samples):
-                est_spec_uncompress = power_uncompress(est_real[k, ...], est_imag[k, ...]).squeeze(1)
-                #Pad the est_spec on both sides since istft won't work on single frame
-                pad = torch.zeros(b,1,f,2)
-                if self.gpu_id is not None:
-                    pad = pad.to(self.gpu_id)
-                est_spec_uncompress = torch.cat([pad, est_spec_uncompress, pad], dim=1)
-                
-                win = torch.hamming_window(self.n_fft)
-                if self.gpu_id is not None:
-                    win = win.to(self.gpu_id)
-
-                est_audio = torch.istft(
-                    est_spec_uncompress.permute(0,2,1,3),
-                    self.n_fft,
-                    self.hop,
-                    window=win,
-                    onesided=True,
-                )
-                est_audios.append(est_audio)
             
-            est_audios = torch.stack(est_audios, dim=0)
-            #clip out audio with the sametime index as in the current frame
-            #st = idx * self.hop
-            #en = st + self.n_fft
-            #Account for zero pading
-            #aud_pad = torch.zeros(b, self.n_fft)
-            #if self.gpu_id is not None:
-            #    aud_pad = aud_pad.to(self.gpu_id)
-            #clean_aud = torch.cat([aud_pad, clean[:, st:en], aud_pad], dim=-1)
-            
-            #clean_real_slc = clean_real_stack[idx, :, :, :, (win_len//2)+1].unsqueeze(-1)
-            #clean_imag_slc = clean_imag_stack[idx, :, :, :, (win_len//2)+1].unsqueeze(-1)
-
             yield  {"est_real": est_real,
                     "est_imag": est_imag,
                     "est_mag": est_mag,
-                    #"clean_real": clean_real_slc,
-                    #"clean_imag": clean_imag_slc,
-                    #"clean_mag": clean_mag,
-                    "est_audio": est_audios,
-                    #"clean": clean_aud
                     }
     
 
@@ -232,8 +216,10 @@ class Trainer:
     
     def calculate_generator_loss2(self, generator_outputs, samples):
         loss = 0
+        for k,v in generator_outputs.items():
+            print(f"{k}:{v.shape}")
         for k in range(samples):
-        
+            
             predict_fake_metric = self.discriminator(
                 generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["est_mag"][k, ...]
             )
@@ -322,10 +308,7 @@ class Trainer:
                 if self.gpu_id is not None:
                     pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:,:, :i + (win_len//2)+1,:]
-                #c_frame = clean_spec[:,:, :, :i + (win_len//2)+1]
                 n_frame = torch.cat([pad, n_frame], dim=2)
-                #pad = pad.permute(0, 1, 3, 2)
-                #c_frame = torch.cat([pad, c_frame], dim=-1)
                 
             elif i > time - 1 - win_len:
                 pad_len = win_len - (time - 1 - i)
@@ -333,19 +316,13 @@ class Trainer:
                 if self.gpu_id is not None:
                     pad = pad.to(self.gpu_id)
                 n_frame = noisy_spec[:, :, i:, :]
-                #c_frame = clean_spec[:, :, :, i:]
-                n_frame = torch.cat([n_frame, pad], dim=2)
-                #pad = pad.permute(0, 1, 3, 2)
-                #c_frame = torch.cat([c_frame, pad], dim=-1)
+                n_frame = torch.cat([n_frame, pad], dim=2)  
                   
             else:
                 n_frame = noisy_spec[:, :, i:i + win_len+1, :]
-                #c_frame = clean_spec[:, :, :, i:i + win_len+1]
             
             noisy_win_stack = torch.cat([noisy_win_stack, n_frame.unsqueeze(0)], dim=0)
-            #clean_win_real_stack = torch.cat([clean_win_real_stack, c_frame[:, 0, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
-            #clean_win_imag_stack = torch.cat([clean_win_imag_stack, c_frame[:, 1, :, :].unsqueeze(1).unsqueeze(0)], dim=0)
-
+            
         #Perhaps append to a list and concatenate once will be more optimal?
         generator_outputs = {
             "est_real": [],
@@ -367,14 +344,11 @@ class Trainer:
             "est_audio": []
         }
 
-        loss_step=20
+        loss_step=5
 
         #Calculate generator loss over window frames and collect outputs. 
         for i, output in enumerate(self.forward_generator_step2(noisy_win_stack[1:, :, :, :, :])): 
-                                                #clean_win_real_stack[1:, :, :, :, :], 
-                                                #clean_win_imag_stack[1:, :, :, :, :],
-                                                #clean)):
-           
+                                             
             output["one_labels"] = torch.ones(args.batch_size)
             if self.gpu_id is not None:
                 output["one_labels"] =  output["one_labels"].to(self.gpu_id)
@@ -383,24 +357,33 @@ class Trainer:
             outputs['est_real'].append(output['est_real'])
             outputs['est_imag'].append(output['est_imag'])
             outputs['est_mag'].append(output['est_mag'])
-            outputs['est_audio'].append(output['est_audio'][..., self.n_fft:-self.n_fft])
+            #outputs['est_audio'].append(output['est_audio'][..., self.n_fft:-self.n_fft])
+            #print(f"est_aud:{output['est_audio'].shape}")
 
             print(f"Generator loop step:{i+1}")
 
             if (i+1) % loss_step == 0:
+                outputs['est_real'] = torch.stack(outputs['est_real'], dim=3).squeeze(4)
+                outputs['est_imag'] = torch.stack(outputs['est_imag'], dim=3).squeeze(4)
+                outputs['est_mag'] = torch.stack(outputs['est_mag'], dim=3).squeeze(4)
+                
                 st = (i+1) // loss_step
                 en = min(st+loss_step, clean_spec.shape[-1])
-
-                outputs['est_real'] = torch.stack(outputs['est_real'], dim=3).squeeze(4)
-                outputs['est_imag'] = torch.stack(outputs['est_imag'], dim=2).squeeze(4)
-                outputs['est_mag'] = torch.stack(outputs['est_mag'], dim=3).squeeze(4)
                 outputs['clean_real'] = clean_spec[:, 0, :, st:en].unsqueeze(1)
                 outputs['clean_imag'] = clean_spec[:, 1, :, st:en].unsqueeze(1)
                 outputs['clean_mag'] = torch.sqrt(clean_spec[:, 0, :, st:en]**2 + clean_spec[:, 1, :, st:en]**2).unsqueeze(1)
-                outputs['est_audio'] = torch.stack(outputs['est_audio'], dim=-1)
-                outputs['clean'] = clean[:, st * self.hop: (st * self.hop) + (loss_step * self.n_fft)]
+                
+                st = st * self.hop
+                en = min(args.cut_len, st + (loss_step-1) * self.hop)
+                outputs['clean'] = clean[:, st:en]
                 outputs['one_labels'] = one_labels
-
+                est_audios = []
+                #print(f"Est_Real:{outputs['est_real'].shape}, {outputs['est_real'][0, ...].shape}")
+                for k in range(self.samples):
+                    est_audio = self.estimate_audio(outputs['est_real'][k, ...], outputs['est_imag'][k, ...])
+                    est_audios.append(est_audio)
+                outputs['est_audio'] = torch.stack(est_audios, dim=0)
+                #print(f"Est_Aud:{outputs['est_audio'].shape}")
 
                 loss = self.calculate_generator_loss2(outputs, samples=self.samples)
                 self.optimizer.zero_grad()
@@ -421,7 +404,6 @@ class Trainer:
             generator_outputs['est_real'].append(output['est_real'].mean(0))
             generator_outputs['est_imag'].append(output['est_imag'].mean(0))
             generator_outputs['est_mag'].append(output['est_mag'].mean(0))
-            #generator_outputs['est_audio'].append(output['est_audio'].mean(0)[..., self.n_fft:-self.n_fft])
             
         generator_outputs['est_real'] = torch.stack(generator_outputs['est_real'], dim=2).squeeze(3)
         generator_outputs['est_imag'] = torch.stack(generator_outputs['est_imag'], dim=2).squeeze(3)
@@ -464,8 +446,7 @@ class Trainer:
             self.optimizer_disc.step()
         else:
             discrim_loss_metric = torch.tensor([0.0])
-
-    
+             
         yield loss.item(), discrim_loss_metric.item(), pesq_score.mean().item()
 
 
@@ -759,7 +740,7 @@ class Trainer:
 
 
 def main(rank: int, world_size: int, args):
-    
+    """
     ddp_setup(rank, world_size)
     if rank == 0:
         print(args)
@@ -768,7 +749,7 @@ def main(rank: int, world_size: int, args):
         ]
         print(f"Available gpus:{available_gpus}")
     #print("AAAA")
-    
+    """
     train_ds, test_ds = dataloader.load_data(
         args.data_dir, args.batch_size, 1, args.cut_len
     )
@@ -782,5 +763,5 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     print(f"World size:{world_size}")
-    mp.spawn(main, args=(world_size, args), nprocs=world_size)
-    #main(None, world_size, args)
+    #mp.spawn(main, args=(world_size, args), nprocs=world_size)
+    main(None, world_size, args)

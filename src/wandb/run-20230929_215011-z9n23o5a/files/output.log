@@ -1,0 +1,168 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+Generator loop step:1
+Generator loop step:2
+Generator loop step:3
+Generator loop step:4
+Generator loop step:5
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+Generator loop step:4, Loss:0.15191711485385895
+Generator loop step:6
+Generator loop step:7
+Generator loop step:8
+Generator loop step:9
+Generator loop step:10
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:9, Loss:0.1495155543088913
+Generator loop step:11
+Generator loop step:12
+Generator loop step:13
+Generator loop step:14
+Generator loop step:15
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:14, Loss:0.1359281837940216
+Generator loop step:16
+Generator loop step:17
+Generator loop step:18
+Generator loop step:19
+Generator loop step:20
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:19, Loss:0.14162640273571014
+Generator loop step:21
+Generator loop step:22
+Generator loop step:23
+Generator loop step:24
+Generator loop step:25
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:24, Loss:0.14467796683311462
+Generator loop step:26
+Generator loop step:27
+Generator loop step:28
+Generator loop step:29
+Generator loop step:30
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:29, Loss:0.14611873030662537
+Generator loop step:31
+Generator loop step:32
+Generator loop step:33
+Generator loop step:34
+Generator loop step:35
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Generator loop step:34, Loss:0.1332196295261383
+Generator loop step:36
+Generator loop step:37
+Generator loop step:38
+Generator loop step:39
+Generator loop step:40
+Est_Real:torch.Size([5, 2, 1, 5, 201]), torch.Size([2, 1, 5, 201])
+Est_Aud:torch.Size([5, 2, 400])
+est_real:torch.Size([5, 2, 1, 5, 201])
+est_imag:torch.Size([5, 2, 1, 5, 201])
+est_mag:torch.Size([5, 2, 1, 5, 201])
+clean_real:torch.Size([2, 1, 201, 5])
+clean_imag:torch.Size([2, 1, 201, 5])
+clean_mag:torch.Size([2, 1, 201, 5])
+est_audio:torch.Size([5, 2, 400])
+clean:torch.Size([2, 400])
+one_labels:torch.Size([2])
+Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7fcb28a17430>
+Traceback (most recent call last):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1328, in __del__
+    self._shutdown_workers()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1301, in _shutdown_workers
+    w.join(timeout=_utils.MP_STATUS_CHECK_INTERVAL)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/popen_fork.py", line 40, in wait
+    if not wait([self.sentinel], timeout):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/connection.py", line 931, in wait
+    ready = selector.select(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt:
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 798, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 789, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 700, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 420, in train_step2
+    loss.backward()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/_tensor.py", line 307, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph, inputs=inputs)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/autograd/__init__.py", line 154, in backward
+    Variable._execution_engine.run_backward(
+KeyboardInterrupt

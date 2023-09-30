@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 780, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 771, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 681, in train2
+    for _, batch in enumerate(self.train_ds):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 521, in __next__
+    data = self._next_data()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1186, in _next_data
+    idx, data = self._get_data()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1152, in _get_data
+    success, data = self._try_get_data()
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 990, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/connection.py", line 424, in _poll
+    r = wait([self], timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/multiprocessing/connection.py", line 931, in wait
+    ready = selector.select(timeout)
+  File "/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

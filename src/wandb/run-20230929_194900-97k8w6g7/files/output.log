@@ -1,0 +1,38 @@
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:572: UserWarning: stft will soon require the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:659.)
+  return _VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+/Users/anuragkumar/opt/miniconda3/envs/rlhf-debug/lib/python3.9/site-packages/torch/functional.py:647: UserWarning: istft will require a complex-valued input tensor in a future PyTorch release. Matching the output from stft with return_complex=True.  (Triggered internally at  ../aten/src/ATen/native/SpectralOps.cpp:811.)
+  return _VF.istft(input, n_fft, hop_length, win_length, window, center,  # type: ignore[attr-defined]
+Generator loop step:1
+Generator loop step:2
+Generator loop step:3
+Generator loop step:4
+Generator loop step:5
+Generator loop step:6
+Generator loop step:7
+Generator loop step:8
+Generator loop step:9
+Generator loop step:10
+Generator loop step:11
+Generator loop step:12
+Generator loop step:13
+Generator loop step:14
+Generator loop step:15
+Generator loop step:16
+Generator loop step:17
+Generator loop step:18
+Generator loop step:19
+/Users/anuragkumar/Anurag/CMGAN/src/train.py:250: UserWarning: Using a target size (torch.Size([2, 1, 20, 201])) that is different to the input size (torch.Size([2, 20, 1, 201])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  ) + F.mse_loss(generator_outputs["est_imag"][k, ...], generator_outputs["clean_imag"].permute(0, 1, 3, 2))
+Generator loop step:20
+Traceback (most recent call last):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 786, in <module>
+    main(None, world_size, args)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 777, in main
+    trainer.train2()
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 688, in train2
+    for loss, disc_loss, pesq in self.train_step2(batch):
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 405, in train_step2
+    loss = self.calculate_generator_loss2(outputs, samples=self.samples)
+  File "/Users/anuragkumar/Anurag/CMGAN/src/train.py", line 255, in calculate_generator_loss2
+    torch.abs(generator_outputs["est_audio"][k, :] - generator_outputs["clean"][:, :est_audio_len])
+RuntimeError: The size of tensor a (0) must match the size of tensor b (2) at non-singleton dimension 1
