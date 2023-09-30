@@ -168,7 +168,7 @@ class Trainer:
         return est_audio
     
     def forward_generator_step2(self, noisy_stack):
-        steps, b, _, _, f = noisy_stack.shape
+        steps = noisy_stack.shape[0]
         samples = self.samples
         for idx in range(steps):
             mini_batch = noisy_stack[idx, :, :, :, :]
@@ -240,7 +240,7 @@ class Trainer:
             time_loss = torch.mean(
                     torch.abs(generator_outputs["est_audio"][k, :] - generator_outputs["clean"][:, :est_audio_len])
                 )
-            loss += (args.loss_weights[0] * loss_ri
+            loss = loss + (args.loss_weights[0] * loss_ri
                     + args.loss_weights[1] * loss_mag
                     + args.loss_weights[3] * gen_loss_GAN
                     + args.loss_weights[2] * time_loss
