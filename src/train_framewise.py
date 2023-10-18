@@ -46,7 +46,7 @@ logging.basicConfig(level=logging.INFO)
 wandb.login()
 
 class FrameLevelTrainer:
-    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, parallel=False, gpu_id=None, pretrain=None, resume_pt=None):
+    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
@@ -84,7 +84,7 @@ class FrameLevelTrainer:
             self.optimizer_disc, step_size=args.decay_epoch, gamma=0.5
         )
 
-        if resume_pt is not None:
+        if resume_pt:
             state_dict = torch.load(resume_pt, map_location=torch.device('cpu'))
             self.model.load_state_dict(state_dict['generator_state_dict'])
             self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
