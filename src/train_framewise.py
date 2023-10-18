@@ -72,7 +72,7 @@ class FrameLevelTrainer:
             del cmgan_state_dict
 
         #optimizers and schedulers
-        self.optimizer = torch.optim.AdamW(filter(lambda layer:layer.requires_grad,self.actor.parameters()), 
+        self.optimizer = torch.optim.AdamW(filter(lambda layer:layer.requires_grad,self.model.parameters()), 
                                            lr=args.init_lr)
         self.optimizer_disc = torch.optim.AdamW(
             self.discriminator.parameters(), lr=2 * args.init_lr
