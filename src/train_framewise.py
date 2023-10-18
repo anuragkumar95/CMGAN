@@ -55,7 +55,7 @@ class FrameLevelTrainer:
         self.samples = samples
         self.model = TSCNet(num_channel=64, 
                             num_features=self.n_fft // 2 + 1, 
-                            win_len=self.win_len+1, 
+                            win_len=self.win_len, 
                             gpu_id=gpu_id)
         self.batchsize=batchsize
       
