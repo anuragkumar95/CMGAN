@@ -45,8 +45,6 @@ logging.basicConfig(level=logging.INFO)
 
 wandb.login()
 
-
-
 class FrameLevelTrainer:
     def __init__(self, train_ds, test_ds, win_len, samples, batchsize, parallel=False, gpu_id=None, pretrain=None, resume_pt=None):
         self.n_fft = 400
@@ -456,7 +454,7 @@ def ddp_setup(rank, world_size):
     init_process_group(backend="nccl", rank=rank, world_size=world_size)
 
 def main(rank: int, world_size: int, args):
-    if args.parallel is not None:
+    if args.parallel:
         ddp_setup(rank, world_size)
         if rank == 0:
             print(args)
