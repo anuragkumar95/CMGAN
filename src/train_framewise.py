@@ -397,6 +397,7 @@ class FrameLevelTrainer:
                 "ep_disc_loss":disc_ep_loss,
                 "ep_train_pesq":ep_pesq
             })
+            print(f"Epoch:{epoch}, Train_G_Loss:{gen_ep_loss}, Train_D_Loss:{disc_ep_loss}, Train_PESQ:{ep_pesq}")
             
             #Run validation loop
             gen_val_loss, disc_val_loss, val_pesq = self.run_validation()
@@ -407,6 +408,7 @@ class FrameLevelTrainer:
                 "val_disc_loss":disc_val_loss,
                 "val_train_pesq":val_pesq
             })
+            print(f"Epoch:{epoch}, Val_G_Loss:{gen_val_loss}, Val_D_Loss:{disc_val_loss}, Val_PESQ:{val_pesq}")
 
             if gen_val_loss <= best_val_gen_loss or disc_val_loss <= best_val_disc_loss:
                 best_val_gen_loss = min(best_val_gen_loss, gen_val_loss)
@@ -419,8 +421,10 @@ class FrameLevelTrainer:
                                 exp=args.exp,
                                 epoch=epoch,
                                 pesq=val_pesq)
+                
             self.scheduler_G.step()
             self.scheduler_D.step()
+
 
     
     def save_model(self, path_root, exp, epoch, pesq):

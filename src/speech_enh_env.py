@@ -5,7 +5,8 @@
 
 import torch
 import numpy as np
-from utils import batch_pesq, power_uncompress
+from utils import power_uncompress
+from models.discriminator import batch_pesq
 from collections import deque
 import torch.nn.functional as F
 
