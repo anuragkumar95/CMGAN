@@ -480,7 +480,7 @@ def main(rank: int, world_size: int, args):
                                 parallel=args.parallel, 
                                 gpu_id=rank, 
                                 pretrain=args.pretrain,
-                                resume_pt=args.pt)
+                                resume_pt=args.ckpt)
     trainer.train(args)
     if args.parallel:
         destroy_process_group()
