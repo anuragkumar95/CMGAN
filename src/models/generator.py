@@ -197,7 +197,7 @@ class TSCNet(nn.Module):
         )
         self.complex_decoder = ComplexDecoder(num_channel=num_channel, signal_window=win_len, gpu_id=gpu_id)
 
-    def forward(self, x, k=1):
+    def forward(self, x):
         mag = torch.sqrt(x[:, 0, :, :] ** 2 + x[:, 1, :, :] ** 2).unsqueeze(1)
         win_len = mag.shape[2]
         
@@ -213,23 +213,16 @@ class TSCNet(nn.Module):
         out_5 = self.TSCB_4(out_4)
 
         #Sample mask from the output distribution k times and take the average.
-        masks = []
-        complex_outs = []
-        for _ in range(k):
-            mask_mu, mask_sigma = self.mask_decoder(out_5)
-            complex_mu, complex_sigma = self.complex_decoder(out_5)
-            mask = self.mask_decoder.sample(mask_mu, mask_sigma)
-            complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
-            masks.append(mask)
-            complex_outs.append(complex_out)
-    
-        masks = torch.stack(masks, dim=0)
-        complex_outs = torch.stack(complex_outs, dim=0)
+        mask_mu, mask_sigma = self.mask_decoder(out_5)
+        complex_mu, complex_sigma = self.complex_decoder(out_5)
+      
+        mask = self.mask_decoder.sample(mask_mu, mask_sigma)
+        complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
         
         #Output mask is for the middle frame of the window
-        out_mag = masks * mag[:, :, win_len//2 + 1, :].unsqueeze(2)
+        out_mag = mask * mag[:, :, win_len//2 + 1, :].unsqueeze(2)
         mag_real = (out_mag * torch.cos(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 2, 4, 3)
         mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 2, 4, 3)
-        final_real = mag_real + complex_outs[:, :, 0, :, :].unsqueeze(2)
-        final_imag = mag_imag + complex_outs[:, :, 1, :, :].unsqueeze(2)
+        final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(2)
+        final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(2)
         return final_real, final_imag

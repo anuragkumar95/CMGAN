@@ -61,17 +61,17 @@ class Trainer:
                             num_features=self.n_fft // 2 + 1, 
                             win_len=self.win_len+1, 
                             gpu_id=gpu_id)
-        #summary(
-        #    self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
-        #)
+        summary(
+            self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
+        )
         self.discriminator = discriminator.Discriminator(ndf=16)
-        #summary(
-        #    self.discriminator,
-        #    [
-        #        (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
-        #        (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
-        #    ],
-        #)
+        summary(
+            self.discriminator,
+            [
+                (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
+                (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
+            ],
+        )
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=args.init_lr)
         self.optimizer_disc = torch.optim.AdamW(
             self.discriminator.parameters(), lr=2 * args.init_lr
@@ -167,21 +167,6 @@ class Trainer:
         )
         return est_audio
     
-    def forward_generator_step2(self, noisy_stack):
-        steps = noisy_stack.shape[0]
-        samples = self.samples
-        for idx in range(steps):
-            mini_batch = noisy_stack[idx, :, :, :, :]
-            
-            est_real, est_imag = self.model(mini_batch, k=samples)
-            est_real, est_imag = est_real.permute(0, 1, 2, 4, 3), est_imag.permute(0, 1, 2, 4, 3)
-            est_mag = torch.sqrt(est_real**2 + est_imag**2)
-            
-            yield  {"est_real": est_real,
-                    "est_imag": est_imag,
-                    "est_mag": est_mag,
-                    }
-    
 
     def calculate_generator_loss(self, generator_outputs):
        
@@ -214,38 +199,7 @@ class Trainer:
     
         return loss
     
-    def calculate_generator_loss2(self, generator_outputs, samples):
-        loss = 0
-        for k,v in generator_outputs.items():
-            print(f"{k}:{v.shape}")
-        for k in range(samples):
-            
-            predict_fake_metric = self.discriminator(
-                generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["est_mag"][k, ...]
-            )
-            gen_loss_GAN = F.mse_loss(
-                predict_fake_metric.flatten(), generator_outputs["one_labels"].float()
-            )
-
-            loss_mag = F.mse_loss(
-                generator_outputs["est_mag"][k, ...], generator_outputs["clean_mag"].permute(0, 1, 3, 2)
-            )
-
-            loss_ri = F.mse_loss(
-                generator_outputs["est_real"][k, ...], generator_outputs["clean_real"].permute(0, 1, 3, 2)
-            ) + F.mse_loss(generator_outputs["est_imag"][k, ...], generator_outputs["clean_imag"].permute(0, 1, 3, 2))
-
-            est_audio_len = generator_outputs["est_audio"].shape[-1]
-            
-            time_loss = torch.mean(
-                    torch.abs(generator_outputs["est_audio"][k, :] - generator_outputs["clean"][:, :est_audio_len])
-                )
-            loss = loss + (args.loss_weights[0] * loss_ri
-                    + args.loss_weights[1] * loss_mag
-                    + args.loss_weights[3] * gen_loss_GAN
-                    + args.loss_weights[2] * time_loss
-            )       
-        return loss/samples
+    
 
     def calculate_discriminator_loss(self, generator_outputs):
 
@@ -357,8 +311,6 @@ class Trainer:
             outputs['est_real'].append(output['est_real'])
             outputs['est_imag'].append(output['est_imag'])
             outputs['est_mag'].append(output['est_mag'])
-            #outputs['est_audio'].append(output['est_audio'][..., self.n_fft:-self.n_fft])
-            #print(f"est_aud:{output['est_audio'].shape}")
 
             print(f"Generator loop step:{i+1}")
 
@@ -378,12 +330,11 @@ class Trainer:
                 outputs['clean'] = clean[:, st:en]
                 outputs['one_labels'] = one_labels
                 est_audios = []
-                #print(f"Est_Real:{outputs['est_real'].shape}, {outputs['est_real'][0, ...].shape}")
+    
                 for k in range(self.samples):
                     est_audio = self.estimate_audio(outputs['est_real'][k, ...], outputs['est_imag'][k, ...])
                     est_audios.append(est_audio)
                 outputs['est_audio'] = torch.stack(est_audios, dim=0)
-                #print(f"Est_Aud:{outputs['est_audio'].shape}")
 
                 loss = self.calculate_generator_loss2(outputs, samples=self.samples)
                 self.optimizer.zero_grad()
