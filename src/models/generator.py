@@ -199,13 +199,14 @@ class TSCNet(nn.Module):
 
     def forward(self, x):
         mag = torch.sqrt(x[:, 0, :, :] ** 2 + x[:, 1, :, :] ** 2).unsqueeze(1)
+        print(f"MAG:{mag.shape}")
         win_len = mag.shape[2]
         
         noisy_phase = torch.angle(
             torch.complex(x[:, 0, :, :], x[:, 1, :, :])
         ).unsqueeze(1)
         x_in = torch.cat([mag, x], dim=1)
-
+        print(f"X_in:{x_in.shape}")
         out_1 = self.dense_encoder(x_in)
         out_2 = self.TSCB_1(out_1)
         out_3 = self.TSCB_2(out_2)
@@ -219,10 +220,12 @@ class TSCNet(nn.Module):
         mask = self.mask_decoder.sample(mask_mu, mask_sigma)
         complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
         
+        print(f"mask:{mask.shape}, complex:{complex_out.shape}")
         #Output mask is for the middle frame of the window
         out_mag = mask * mag[:, :, win_len//2 + 1, :].unsqueeze(2)
-        mag_real = (out_mag * torch.cos(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 2, 4, 3)
-        mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 2, 4, 3)
+        print(f"outmag:{out_mag.shape}")
+        mag_real = (out_mag * torch.cos(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
+        mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
         final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(2)
         final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(2)
         return final_real, final_imag
