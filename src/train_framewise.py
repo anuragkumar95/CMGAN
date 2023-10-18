@@ -192,6 +192,7 @@ class FrameLevelTrainer:
         est_real = []
         est_imag = []
         for idx in range(agent.steps):
+            print("Frame:",idx)
             #Get input
             inp = agent.get_state_input(agent.state, idx)
 
