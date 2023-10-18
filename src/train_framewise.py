@@ -199,8 +199,8 @@ class FrameLevelTrainer:
             frame_real, frame_imag = self.model(inp)
 
             #Collect frames
-            est_real.append(frame_real)
-            est_imag.append(frame_imag)
+            est_real.append(frame_real.to(torch.device('cpu')))
+            est_imag.append(frame_imag.to(torch.device('cpu')))
 
         est_real = torch.stack(est_real, dim=2)
         est_imag = torch.stack(est_imag, dim=2)
@@ -220,13 +220,13 @@ class FrameLevelTrainer:
         )
 
         return {
-            "est_real": est_real,
-            "est_imag": est_imag,
-            "est_mag": est_mag,
-            "clean_real": clean_real,
-            "clean_imag": clean_imag,
-            "clean_mag": clean_mag,
-            "est_audio": est_audio,
+            "est_real": est_real.to(self.gpu_id),
+            "est_imag": est_imag.to(self.gpu_id),
+            "est_mag": est_mag.to(self.gpu_id),
+            "clean_real": clean_real.to(self.gpu_id),
+            "clean_imag": clean_imag.to(self.gpu_id),
+            "clean_mag": clean_mag.to(self.gpu_id),
+            "est_audio": est_audio.to(self.gpu_id),
             "clean":agent.state['cl_audio']
         }
         
