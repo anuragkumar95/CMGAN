@@ -183,9 +183,13 @@ class ComplexDecoder(nn.Module):
         return x_mu, x_sigma
 
 class TSCNet(nn.Module):
-    def __init__(self, num_channel=64, num_features=201, win_len=51, gpu_id=None):
+    def __init__(self, num_channel=64, num_features=201, win_len=51, mag_only=False, gpu_id=None):
         super(TSCNet, self).__init__()
-        self.dense_encoder = DenseEncoder(in_channel=3, channels=num_channel)
+        if mag_only:
+            in_channels=1
+        else:
+            in_channels=3
+        self.dense_encoder = DenseEncoder(in_channel=in_channels, channels=num_channel)
 
         self.TSCB_1 = TSCB(num_channel=num_channel)
         self.TSCB_2 = TSCB(num_channel=num_channel)
@@ -197,16 +201,19 @@ class TSCNet(nn.Module):
         )
         self.complex_decoder = ComplexDecoder(num_channel=num_channel, signal_window=win_len, gpu_id=gpu_id)
 
-    def forward(self, x):
+    def forward(self, x, mag_only=False):
         mag = torch.sqrt(x[:, 0, :, :] ** 2 + x[:, 1, :, :] ** 2).unsqueeze(1)
-        #print(f"MAG:{mag.shape}")
+    
         win_len = mag.shape[2]
         
         noisy_phase = torch.angle(
             torch.complex(x[:, 0, :, :], x[:, 1, :, :])
         ).unsqueeze(1)
-        x_in = torch.cat([mag, x], dim=1)
-        #print(f"X_in:{x_in.shape}")
+        if mag_only:
+            x_in = mag
+        else:
+            x_in = torch.cat([mag, x], dim=1)
+       
         out_1 = self.dense_encoder(x_in)
         out_2 = self.TSCB_1(out_1)
         out_3 = self.TSCB_2(out_2)
@@ -215,19 +222,19 @@ class TSCNet(nn.Module):
 
         #Sample mask from the output distribution k times and take the average.
         mask_mu, mask_sigma = self.mask_decoder(out_5)
-        complex_mu, complex_sigma = self.complex_decoder(out_5)
-      
         mask = self.mask_decoder.sample(mask_mu, mask_sigma)
-        complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
         
-        #print(f"mask:{mask.shape}, complex:{complex_out.shape}")
         #Output mask is for the middle frame of the window
         out_mag = mask * mag[:, :, win_len//2 + 1, :].unsqueeze(2)
-        #print(f"outmag:{out_mag.shape}")
         mag_real = (out_mag * torch.cos(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
         mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
-        #print(f"mag_real:{mag_real.shape}")
-        final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)
-        final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(1)
-        #print(f"final_real:{final_real.shape}, final_imag:{final_imag.shape}")
-        return final_real, final_imag
+        
+        if not mag_only:
+            complex_mu, complex_sigma = self.complex_decoder(out_5)
+            complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
+            final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)
+            final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(1)
+            return final_real, final_imag
+        
+        return mag_real, mag_imag
+            

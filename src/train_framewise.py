@@ -28,6 +28,8 @@ parser.add_argument("-pt", "--ckpt", type=str, required=False, default=None,
                         help="Path to saved cmgan checkpoint for resuming training.")
 parser.add_argument("--pretrain", type=str, required=False, default=None, 
                     help="path to the pretrained checkpoint of original CMGAN.")
+parser.add_argument("--mag_only", action='store_true', required=False, 
+                    help="set this flag to train using magnitude only.")
 parser.add_argument("--log_interval", type=int, default=500)
 parser.add_argument("--decay_epoch", type=int, default=30, help="epoch from which to start lr decay")
 parser.add_argument("--init_lr", type=float, default=5e-4, help="initial learning rate")
@@ -46,7 +48,7 @@ logging.basicConfig(level=logging.INFO)
 wandb.login()
 
 class FrameLevelTrainer:
-    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
+    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, magnitude_only=False, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
@@ -56,8 +58,10 @@ class FrameLevelTrainer:
         self.model = TSCNet(num_channel=64, 
                             num_features=self.n_fft // 2 + 1, 
                             win_len=self.win_len, 
-                            gpu_id=gpu_id)
-        self.batchsize=batchsize
+                            gpu_id=gpu_id,
+                            mag_only=magnitude_only)
+        self.batchsize = batchsize
+        self.mag_only = magnitude_only
       
         self.discriminator = discriminator.Discriminator(ndf=16)
 
@@ -191,20 +195,21 @@ class FrameLevelTrainer:
         """
         est_real = []
         est_imag = []
+
         for idx in range(agent.steps):
-            #print("Frame:",idx)
             #Get input
             inp = agent.get_state_input(agent.state, idx)
 
             #Get predictions from generator on this frame
-            frame_real, frame_imag = self.model(inp)
+            frame_real, frame_imag = self.model(inp, mag_only=self.mag_only)
+            
             #Collect frames
             est_real.append(frame_real.to(torch.device('cpu')))
             est_imag.append(frame_imag.to(torch.device('cpu')))
 
         est_real = torch.stack(est_real, dim=-1).squeeze(3)
         est_imag = torch.stack(est_imag, dim=-1).squeeze(3)
-        #print(f"est_real:{est_real.shape}, est_imag:{est_imag.shape}")
+        
         est_mag = torch.sqrt(est_real**2 + est_imag**2)
         clean_real = agent.state['clean_real']
         clean_imag = agent.state['clean_imag']
@@ -230,7 +235,7 @@ class FrameLevelTrainer:
             "clean":agent.state['cl_audio'],
             "one_labels":agent.state['one_labels']
         }
-        
+         
     def calculate_generator_loss(self, generator_outputs):
        
         predict_fake_metric = self.discriminator(
@@ -243,17 +248,17 @@ class FrameLevelTrainer:
         loss_mag = F.mse_loss(
             generator_outputs["est_mag"], generator_outputs["clean_mag"]
         )
-
+        
         loss_ri = F.mse_loss(
             generator_outputs["est_real"], generator_outputs["clean_real"]
         ) + F.mse_loss(generator_outputs["est_imag"], generator_outputs["clean_imag"])
 
         est_audio_len = generator_outputs["est_audio"].shape[-1]
-        
+    
         time_loss = torch.mean(
-                torch.abs(generator_outputs["est_audio"] - generator_outputs["clean"][:, :est_audio_len])
-            )
-        
+            torch.abs(generator_outputs["est_audio"] - generator_outputs["clean"][:, :est_audio_len])
+        )
+
         loss = (args.loss_weights[0] * loss_ri
                 + args.loss_weights[1] * loss_mag
                 + args.loss_weights[3] * gen_loss_GAN
@@ -267,9 +272,7 @@ class FrameLevelTrainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
-        #print("Audio:", generator_outputs['clean'].shape, generator_outputs["est_audio"].shape)
         pesq_mask, pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
-        #print(f"PESQ:{pesq_score}, PESQ MASK:{pesq_mask}")
 
         if self.gpu_id is not None:
             pesq_score = pesq_score.to(self.gpu_id)
@@ -482,7 +485,8 @@ def main(rank: int, world_size: int, args):
                                 parallel=args.parallel, 
                                 gpu_id=rank, 
                                 pretrain=args.pretrain,
-                                resume_pt=args.ckpt)
+                                resume_pt=args.ckpt,
+                                magnitude_only=args.mag_only)
     trainer.train(args)
     if args.parallel:
         destroy_process_group()
