@@ -202,8 +202,8 @@ class FrameLevelTrainer:
             est_real.append(frame_real.to(torch.device('cpu')))
             est_imag.append(frame_imag.to(torch.device('cpu')))
 
-        est_real = torch.stack(est_real, dim=2)
-        est_imag = torch.stack(est_imag, dim=2)
+        est_real = torch.stack(est_real, dim=-1)
+        est_imag = torch.stack(est_imag, dim=-1)
         print(f"est_real:{est_real.shape}, est_imag:{est_imag.shape}")
         est_real, est_imag = est_real.permute(0, 1, 3, 2), est_imag.permute(0, 1, 3, 2)
         est_mag = torch.sqrt(est_real**2 + est_imag**2)
