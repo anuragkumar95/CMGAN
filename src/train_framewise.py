@@ -472,7 +472,7 @@ def main(rank: int, world_size: int, args):
         train_ds, test_ds = dataloader.load_data(
             args.data_dir, args.batch_size, 1, args.cut_len, parallel=False
         )
-        print(f"Train:{len(train_ds)}, Validation:{len(test_ds)}")
+    print(f"Train:{len(train_ds)}, Validation:{len(test_ds)}")
     
     trainer = FrameLevelTrainer(train_ds=train_ds, 
                                 test_ds=test_ds, 
