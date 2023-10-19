@@ -229,5 +229,5 @@ class TSCNet(nn.Module):
         print(f"mag_real:{mag_real.shape}")
         final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)
         final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(1)
-        print(f"final_real:{final_real.shape}")
+        print(f"final_real:{final_real.shape}, final_imag:{final_imag.shape}")
         return final_real, final_imag
