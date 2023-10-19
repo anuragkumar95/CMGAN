@@ -64,6 +64,6 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x, y):
-    
+        print(f"X:{x.shape}, Y:{y.shape}")
         xy = torch.cat([x, y], dim=1)
         return self.layers(xy)
