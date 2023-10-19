@@ -233,7 +233,7 @@ class FrameLevelTrainer:
     def calculate_generator_loss(self, generator_outputs):
        
         predict_fake_metric = self.discriminator(
-            generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["est_mag"]
+            generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
         gen_loss_GAN = F.mse_loss(
             predict_fake_metric.flatten(), generator_outputs["one_labels"].float()
