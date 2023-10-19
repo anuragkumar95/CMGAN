@@ -216,7 +216,7 @@ class FrameLevelTrainer:
             est_spec_uncompress,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
             onesided=True,
         )
 
