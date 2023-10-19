@@ -241,12 +241,12 @@ class FrameLevelTrainer:
         )
 
         loss_mag = F.mse_loss(
-            generator_outputs["est_mag"], generator_outputs["clean_mag"].permute(0, 1, 3, 2)
+            generator_outputs["est_mag"], generator_outputs["clean_mag"]
         )
 
         loss_ri = F.mse_loss(
-            generator_outputs["est_real"], generator_outputs["clean_real"].permute(0, 1, 3, 2)
-        ) + F.mse_loss(generator_outputs["est_imag"], generator_outputs["clean_imag"].permute(0, 1, 3, 2))
+            generator_outputs["est_real"], generator_outputs["clean_real"]
+        ) + F.mse_loss(generator_outputs["est_imag"], generator_outputs["clean_imag"])
 
         est_audio_len = generator_outputs["est_audio"].shape[-1]
         
