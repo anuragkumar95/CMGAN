@@ -227,7 +227,8 @@ class FrameLevelTrainer:
             "clean_imag": clean_imag.to(self.gpu_id),
             "clean_mag": clean_mag.to(self.gpu_id),
             "est_audio": est_audio.to(self.gpu_id),
-            "clean":agent.state['cl_audio']
+            "clean":agent.state['cl_audio'],
+            "one_labels":agent.state['one_labels']
         }
         
     def calculate_generator_loss(self, generator_outputs):
