@@ -226,6 +226,8 @@ class TSCNet(nn.Module):
         print(f"outmag:{out_mag.shape}")
         mag_real = (out_mag * torch.cos(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
         mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
+        print(f"mag_real:{mag_real.shape}")
         final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(2)
         final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(2)
+        print(f"final_real:{final_real.shape}")
         return final_real, final_imag
