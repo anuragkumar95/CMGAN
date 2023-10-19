@@ -279,10 +279,10 @@ class FrameLevelTrainer:
         if pesq_score is not None:
             
             predict_enhance_metric = self.discriminator(
-                generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["est_mag"].detach()
+                generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
             )
             predict_max_metric = self.discriminator(
-                generator_outputs["clean_mag"].permute(0,1,3,2), generator_outputs["clean_mag"].permute(0,1,3,2)
+                generator_outputs["clean_mag"], generator_outputs["clean_mag"].permute(0,1,3,2)
             )
             discrim_loss_metric = F.mse_loss(
                 predict_max_metric.flatten(), generator_outputs["one_labels"]
