@@ -192,7 +192,7 @@ class FrameLevelTrainer:
         est_real = []
         est_imag = []
         for idx in range(agent.steps):
-            print("Frame:",idx)
+            #print("Frame:",idx)
             #Get input
             inp = agent.get_state_input(agent.state, idx)
 
@@ -204,7 +204,7 @@ class FrameLevelTrainer:
 
         est_real = torch.stack(est_real, dim=-1).squeeze(3)
         est_imag = torch.stack(est_imag, dim=-1).squeeze(3)
-        print(f"est_real:{est_real.shape}, est_imag:{est_imag.shape}")
+        #print(f"est_real:{est_real.shape}, est_imag:{est_imag.shape}")
         est_mag = torch.sqrt(est_real**2 + est_imag**2)
         clean_real = agent.state['clean_real']
         clean_imag = agent.state['clean_imag']
@@ -267,9 +267,9 @@ class FrameLevelTrainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
-        print("Audio:", generator_outputs['clean'].shape, generator_outputs["est_audio"].shape)
+        #print("Audio:", generator_outputs['clean'].shape, generator_outputs["est_audio"].shape)
         pesq_mask, pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
-        print(f"PESQ:{pesq_score}, PESQ MASK:{pesq_mask}")
+        #print(f"PESQ:{pesq_score}, PESQ MASK:{pesq_mask}")
 
         if self.gpu_id is not None:
             pesq_score = pesq_score.to(self.gpu_id)
@@ -335,6 +335,7 @@ class FrameLevelTrainer:
                 'step_disc_loss':step_disc_loss,
                 'step_train_pesq':step_pesq
             })
+            print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}")
             gen_ep_loss += step_gen_loss
             disc_ep_loss += step_disc_loss
             ep_pesq += step_pesq
