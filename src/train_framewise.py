@@ -30,6 +30,8 @@ parser.add_argument("--pretrain", type=str, required=False, default=None,
                     help="path to the pretrained checkpoint of original CMGAN.")
 parser.add_argument("--mag_only", action='store_true', required=False, 
                     help="set this flag to train using magnitude only.")
+parser.add_argument("--wandb", action='store_true', required=False, 
+                    help="set this flag to log using wandb.")
 parser.add_argument("--log_interval", type=int, default=500)
 parser.add_argument("--decay_epoch", type=int, default=30, help="epoch from which to start lr decay")
 parser.add_argument("--init_lr", type=float, default=5e-4, help="initial learning rate")
@@ -44,11 +46,8 @@ parser.add_argument("--loss_weights", type=list, default=[0.1, 0.9, 0.2, 0.05],
 args = parser.parse_args()
 logging.basicConfig(level=logging.INFO)
 
-
-wandb.login()
-
 class FrameLevelTrainer:
-    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, magnitude_only=False, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
+    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, log_wandb=False, magnitude_only=False, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
@@ -105,7 +104,9 @@ class FrameLevelTrainer:
                 self.model = DDP(self.model, device_ids=[gpu_id])
                 self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
         self.gpu_id = gpu_id
-        wandb.init(project=args.exp)
+        if log_wandb:
+            wandb.login()
+            wandb.init(project=args.exp)
 
     
     def create_spectrograms(self, noisy, clean):
@@ -332,12 +333,15 @@ class FrameLevelTrainer:
         for i, batch in enumerate(self.train_ds):
             batch = self.preprocess_batch(batch)
             step_gen_loss, step_disc_loss, step_pesq = self.train_one_step(batch)
-            wandb.log({
-                'step': i+1,
-                'step_gen_loss':step_gen_loss,
-                'step_disc_loss':step_disc_loss,
-                'step_train_pesq':step_pesq
-            })
+            if self.log_wandb:
+                wandb.log({
+                    'step': i+1,
+                    'step_gen_loss':step_gen_loss,
+                    'step_disc_loss':step_disc_loss,
+                    'step_train_pesq':step_pesq
+                    'gen_lr':self.scheduler_G.get_last_lr(),
+                    'disc_lr':self.scheduler_D.get_last_lr()
+                })
             print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}")
             gen_ep_loss += step_gen_loss
             disc_ep_loss += step_disc_loss
@@ -393,24 +397,24 @@ class FrameLevelTrainer:
         for epoch in range(args.epochs):
             #Run training loop
             gen_ep_loss, disc_ep_loss, ep_pesq = self.train_one_epoch()
-
-            wandb.log({
-                "Epoch":epoch,
-                "ep_gen_loss":gen_ep_loss,
-                "ep_disc_loss":disc_ep_loss,
-                "ep_train_pesq":ep_pesq
-            })
+            if self.log_wandb:
+                wandb.log({
+                    "Epoch":epoch,
+                    "ep_gen_loss":gen_ep_loss,
+                    "ep_disc_loss":disc_ep_loss,
+                    "ep_train_pesq":ep_pesq
+                })
             print(f"Epoch:{epoch}, Train_G_Loss:{gen_ep_loss}, Train_D_Loss:{disc_ep_loss}, Train_PESQ:{ep_pesq}")
             
             #Run validation loop
             gen_val_loss, disc_val_loss, val_pesq = self.run_validation()
-
-            wandb.log({
-                "Epoch":epoch,
-                "val_gen_loss":gen_val_loss,
-                "val_disc_loss":disc_val_loss,
-                "val_train_pesq":val_pesq
-            })
+            if self.log_wandb:
+                wandb.log({
+                    "Epoch":epoch,
+                    "val_gen_loss":gen_val_loss,
+                    "val_disc_loss":disc_val_loss,
+                    "val_pesq":val_pesq
+                })
             print(f"Epoch:{epoch}, Val_G_Loss:{gen_val_loss}, Val_D_Loss:{disc_val_loss}, Val_PESQ:{val_pesq}")
 
             if gen_val_loss <= best_val_gen_loss or disc_val_loss <= best_val_disc_loss:
@@ -428,25 +432,25 @@ class FrameLevelTrainer:
             self.scheduler_G.step()
             self.scheduler_D.step()
 
-
-    
     def save_model(self, path_root, exp, epoch, pesq):
         """
         Save model at path_root
         """
         checkpoint_prefix = f"{exp}_PESQ_{pesq}_epoch_{epoch}.pt"
         path = os.path.join(path_root, checkpoint_prefix)
-        
-        save_dict = {'generator_state_dict':self.model.state_dict(), 
-                     'discriminator_state_dict':self.discriminator.state_dict(),
-                     'optimizer_G_state_dict':self.optimizer.state_dict(),
-                     'optimizer_D_state_dict':self.optimizer_disc.state_dict(),
-                     'scheduler_G_state_dict':self.scheduler_G.state_dict(),
-                     'scheduler_D_state_dict':self.scheduler_D.state_dict(),
-                    }
-        
-        torch.save(save_dict, path)
-        print(f"checkpoint:{checkpoint_prefix} saved at {path}")
+        if self.gpu_id == 0:
+            save_dict = {'generator_state_dict':self.model.module.state_dict(), 
+                        'discriminator_state_dict':self.discriminator.module.state_dict(),
+                        'optimizer_G_state_dict':self.optimizer.state_dict(),
+                        'optimizer_D_state_dict':self.optimizer_disc.state_dict(),
+                        'scheduler_G_state_dict':self.scheduler_G.state_dict(),
+                        'scheduler_D_state_dict':self.scheduler_D.state_dict(),
+                        'epoch':epoch,
+                        'pesq':pesq
+                        }
+            
+            torch.save(save_dict, path)
+            print(f"checkpoint:{checkpoint_prefix} saved at {path}")
 
 def ddp_setup(rank, world_size):
     """
@@ -486,7 +490,8 @@ def main(rank: int, world_size: int, args):
                                 gpu_id=rank, 
                                 pretrain=args.pretrain,
                                 resume_pt=args.ckpt,
-                                magnitude_only=args.mag_only)
+                                magnitude_only=args.mag_only,
+                                log_wandb=args.wandb)
     trainer.train(args)
     if args.parallel:
         destroy_process_group()
