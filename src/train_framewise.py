@@ -61,6 +61,7 @@ class FrameLevelTrainer:
                             mag_only=magnitude_only)
         self.batchsize = batchsize
         self.mag_only = magnitude_only
+        self.log_wandb = log_wandb
       
         self.discriminator = discriminator.Discriminator(ndf=16)
 
