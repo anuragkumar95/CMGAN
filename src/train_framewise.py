@@ -338,7 +338,7 @@ class FrameLevelTrainer:
                     'step': i+1,
                     'step_gen_loss':step_gen_loss,
                     'step_disc_loss':step_disc_loss,
-                    'step_train_pesq':step_pesq
+                    'step_train_pesq':step_pesq,
                     'gen_lr':self.scheduler_G.get_last_lr(),
                     'disc_lr':self.scheduler_D.get_last_lr()
                 })
