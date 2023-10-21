@@ -127,9 +127,11 @@ class Trainer:
 
     def calculate_generator_loss(self, generator_outputs):
 
-        predict_fake_metric = self.discriminator(
+        _, predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
+        predict_fake_metric = torch.argmax(predict_fake_metric, dim=-1)
+
         gen_loss_GAN = F.mse_loss(
             predict_fake_metric.flatten(), generator_outputs["one_labels"].float()
         )
@@ -163,10 +165,10 @@ class Trainer:
 
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
-            predict_enhance_metric = self.discriminator(
+            predict_enhance_metric, _ = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
             )
-            predict_max_metric = self.discriminator(
+            predict_max_metric, _ = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["clean_mag"]
             )
             discrim_loss_metric = F.mse_loss(
