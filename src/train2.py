@@ -51,17 +51,17 @@ class Trainer:
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1).cuda()
-        summary(
-            self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
-        )
+        #summary(
+        #    self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
+        #)
         self.discriminator = Discriminator(ndf=16).cuda()
-        summary(
-            self.discriminator,
-            [
-                (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
-                (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
-            ],
-        )
+        #summary(
+        #    self.discriminator,
+        #    [
+        #        (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
+        #        (1, 1, int(self.n_fft / 2) + 1, args.cut_len // self.hop + 1),
+        #    ],
+        #)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=args.init_lr)
         self.optimizer_disc = torch.optim.AdamW(
             self.discriminator.parameters(), lr=2 * args.init_lr
