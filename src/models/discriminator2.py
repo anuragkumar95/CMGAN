@@ -61,10 +61,9 @@ class Discriminator(nn.Module):
             LearnableSigmoid(1),
         )
         self.out = nn.Linear(1, 2)
-        self.softmax = F.softmax(dim=-1)
         
     def forward(self, x, y):
         xy = torch.cat([x, y], dim=1)
         pesq_out = self.layers(xy)
-        gan_out = self.softmax(self.out(pesq_out))
+        gan_out = F.softmax(self.out(pesq_out), dim=-1)
         return pesq_out, gan_out
