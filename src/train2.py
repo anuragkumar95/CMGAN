@@ -311,4 +311,5 @@ def main(rank: int, world_size: int, args):
 if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
+    print(f"World_size:{world_size}")
     mp.spawn(main, args=(world_size, args), nprocs=world_size)
