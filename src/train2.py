@@ -162,7 +162,7 @@ class Trainer:
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
         pesq_score = batch_pesq(clean_audio_list, est_audio_list)
-
+        print(predict_enhance_metric.shape)
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
             #predict_enhance_metric, gan_out = self.discriminator(
@@ -199,7 +199,7 @@ class Trainer:
         fake_pesq, predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
-        predict_max_metric, gan_max_out = self.discriminator(
+        max_pesq, max_gan_out = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["clean_mag"]
             )
 
@@ -209,7 +209,7 @@ class Trainer:
         self.optimizer.step()
 
         # Train Discriminator
-        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs, predict_fake_metric, predict_max_metric)
+        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs, fake_pesq, max_pesq)
 
         if discrim_loss_metric is not None:
             self.optimizer_disc.zero_grad()
