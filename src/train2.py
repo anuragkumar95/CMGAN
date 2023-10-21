@@ -301,7 +301,7 @@ def main(rank: int, world_size: int, args):
         ]
         print(available_gpus)
     train_ds, test_ds = dataloader.load_data(
-        args.data_dir, args.batch_size, 2, args.cut_len
+        args.data_dir, args.batch_size, 1, args.cut_len, parallel=True
     )
     trainer = Trainer(train_ds, test_ds, rank)
     trainer.train()
