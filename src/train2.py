@@ -125,11 +125,11 @@ class Trainer:
             "est_audio": est_audio,
         }
 
-    def calculate_generator_loss(self, generator_outputs):
+    def calculate_generator_loss(self, generator_outputs, predict_fake_metric):
 
-        _, predict_fake_metric = self.discriminator(
-            generator_outputs["clean_mag"], generator_outputs["est_mag"]
-        )
+        #fake_pesq, predict_fake_metric = self.discriminator(
+        #    generator_outputs["clean_mag"], generator_outputs["est_mag"]
+        #)
         predict_fake_metric = torch.argmax(predict_fake_metric, dim=-1)
 
         gen_loss_GAN = F.mse_loss(
@@ -156,7 +156,7 @@ class Trainer:
 
         return loss
 
-    def calculate_discriminator_loss(self, generator_outputs):
+    def calculate_discriminator_loss(self, generator_outputs, predict_enhance_metric, predict_max_metric):
 
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
@@ -165,12 +165,12 @@ class Trainer:
 
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
-            predict_enhance_metric, _ = self.discriminator(
-                generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
-            )
-            predict_max_metric, _ = self.discriminator(
-                generator_outputs["clean_mag"], generator_outputs["clean_mag"]
-            )
+            #predict_enhance_metric, gan_out = self.discriminator(
+            #    generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
+            #)
+            #predict_max_metric, gan_max_out = self.discriminator(
+            #    generator_outputs["clean_mag"], generator_outputs["clean_mag"]
+            #)
             discrim_loss_metric = F.mse_loss(
                 predict_max_metric.flatten(), generator_outputs["one_labels"]
             ) + F.mse_loss(predict_enhance_metric.flatten(), pesq_score)
@@ -187,6 +187,7 @@ class Trainer:
         noisy = batch[1].to(self.gpu_id)
         one_labels = torch.ones(args.batch_size).to(self.gpu_id)
 
+        #Run generator
         generator_outputs = self.forward_generator_step(
             clean,
             noisy,
@@ -194,13 +195,21 @@ class Trainer:
         generator_outputs["one_labels"] = one_labels
         generator_outputs["clean"] = clean
 
-        loss = self.calculate_generator_loss(generator_outputs)
+        #Run discriminator
+        fake_pesq, predict_fake_metric = self.discriminator(
+            generator_outputs["clean_mag"], generator_outputs["est_mag"]
+        )
+        predict_max_metric, gan_max_out = self.discriminator(
+                generator_outputs["clean_mag"], generator_outputs["clean_mag"]
+            )
+
+        loss = self.calculate_generator_loss(generator_outputs, predict_fake_metric)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
         # Train Discriminator
-        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs)
+        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs, predict_fake_metric, predict_max_metric)
 
         if discrim_loss_metric is not None:
             self.optimizer_disc.zero_grad()
