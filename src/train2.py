@@ -1,10 +1,10 @@
 from models.generator2 import TSCNet
-from models.discriminator2 import Discriminator
+from models.discriminator2 import Discriminator, batch_pesq
 import os
 from data import dataloader
 import torch.nn.functional as F
 import torch
-from utils import power_compress, power_uncompress
+from utils import power_compress, power_uncompress, original_pesq
 import logging
 from torchinfo import summary
 import argparse
@@ -12,6 +12,7 @@ import argparse
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
+import wandb
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=120, help="number of epochs of training")
@@ -68,6 +69,8 @@ class Trainer:
         self.model = DDP(self.model, device_ids=[gpu_id])
         self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
         self.gpu_id = gpu_id
+        wandb.login()
+        wandb.init(project=args.exp)
 
     def forward_generator_step(self, clean, noisy):
 
@@ -155,7 +158,7 @@ class Trainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
-        pesq_score = discriminator.batch_pesq(clean_audio_list, est_audio_list)
+        pesq_score = batch_pesq(clean_audio_list, est_audio_list)
 
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
@@ -170,8 +173,9 @@ class Trainer:
             ) + F.mse_loss(predict_enhance_metric.flatten(), pesq_score)
         else:
             discrim_loss_metric = None
+            pesq_score = torch.tensor([0.0])
 
-        return discrim_loss_metric
+        return discrim_loss_metric, pesq_score.mean()
 
     def train_step(self, batch):
 
@@ -193,7 +197,7 @@ class Trainer:
         self.optimizer.step()
 
         # Train Discriminator
-        discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
+        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs)
 
         if discrim_loss_metric is not None:
             self.optimizer_disc.zero_grad()
@@ -201,6 +205,12 @@ class Trainer:
             self.optimizer_disc.step()
         else:
             discrim_loss_metric = torch.tensor([0.0])
+
+        wandb.log({
+            'step_gen_loss':loss,
+            'step_disc_loss':discrim_loss_metric,
+            'step_train_pesq':pesq
+        })
 
         return loss.item(), discrim_loss_metric.item()
 
@@ -220,9 +230,15 @@ class Trainer:
 
         loss = self.calculate_generator_loss(generator_outputs)
 
-        discrim_loss_metric = self.calculate_discriminator_loss(generator_outputs)
+        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs)
         if discrim_loss_metric is None:
             discrim_loss_metric = torch.tensor([0.0])
+
+        wandb.log({
+            'val_gen_loss':loss,
+            'val_disc_loss':discrim_loss_metric,
+            'val_pesq':pesq
+        })
 
         return loss.item(), discrim_loss_metric.item()
 
