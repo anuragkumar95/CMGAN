@@ -15,6 +15,7 @@ from torch.distributed import init_process_group, destroy_process_group
 import wandb
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--exp", type=str, default='default', help="experiment name")
 parser.add_argument("--epochs", type=int, default=120, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=4)
 parser.add_argument("--log_interval", type=int, default=500)
