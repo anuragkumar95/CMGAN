@@ -206,8 +206,8 @@ class FrameLevelTrainer:
             frame_real, frame_imag = self.model(inp, mag_only=self.mag_only)
             
             #Collect frames
-            est_real.append(frame_real.to(torch.device('cpu')))
-            est_imag.append(frame_imag.to(torch.device('cpu')))
+            est_real.append(frame_real)
+            est_imag.append(frame_imag)
 
         est_real = torch.stack(est_real, dim=-1).squeeze(3)
         est_imag = torch.stack(est_imag, dim=-1).squeeze(3)
@@ -222,25 +222,25 @@ class FrameLevelTrainer:
             est_spec_uncompress,
             self.n_fft,
             self.hop,
-            window=torch.hamming_window(self.n_fft),#.to(self.gpu_id),
+            window=torch.hamming_window(self.n_fft).to(self.gpu_id),
             onesided=True,
         )
 
         return {
-            "est_real": est_real.to(self.gpu_id),
-            "est_imag": est_imag.to(self.gpu_id),
-            "est_mag": est_mag.to(self.gpu_id),
-            "clean_real": clean_real.to(self.gpu_id),
-            "clean_imag": clean_imag.to(self.gpu_id),
-            "clean_mag": clean_mag.to(self.gpu_id),
-            "est_audio": est_audio.to(self.gpu_id),
+            "est_real": est_real,
+            "est_imag": est_imag,
+            "est_mag": est_mag,
+            "clean_real": clean_real,
+            "clean_imag": clean_imag,
+            "clean_mag": clean_mag,
+            "est_audio": est_audio,
             "clean":agent.state['cl_audio'],
             "one_labels":agent.state['one_labels']
         }
          
     def calculate_generator_loss(self, generator_outputs):
        
-        predict_fake_metric = self.discriminator(
+        _, predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
         gen_loss_GAN = F.mse_loss(
@@ -283,10 +283,10 @@ class FrameLevelTrainer:
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
             
-            predict_enhance_metric = self.discriminator(
+            predict_enhance_metric, _ = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
             )
-            predict_max_metric = self.discriminator(
+            predict_max_metric, _ = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["clean_mag"]
             )
             discrim_loss_metric = F.mse_loss(

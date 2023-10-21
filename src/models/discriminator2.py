@@ -6,6 +6,7 @@ import torch.nn as nn
 from utils import LearnableSigmoid
 
 
+
 def pesq_loss(clean, noisy, sr=16000):
     try:
         pesq_score = pesq(sr, clean, noisy, "wb")
@@ -58,7 +59,7 @@ class Discriminator(nn.Module):
             nn.utils.spectral_norm(nn.Linear(ndf * 4, 1)),
             LearnableSigmoid(1),
         )
-
+        
     def forward(self, x, y):
         xy = torch.cat([x, y], dim=1)
         return self.layers(xy)

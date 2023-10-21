@@ -4,6 +4,8 @@ from pesq import pesq
 import torch
 import torch.nn as nn
 from utils import LearnableSigmoid
+import torch.nn.functional as F
+
 
 
 def pesq_loss(clean, noisy, sr=16000):
@@ -62,8 +64,13 @@ class Discriminator(nn.Module):
             nn.utils.spectral_norm(nn.Linear(ndf * 4, 1)),
             LearnableSigmoid(1),
         )
+        self.out = nn.Linear(1, 2)
+        self.softmax = F.softmax(dim=-1)
+
 
     def forward(self, x, y):
-        #print(f"X:{x.shape}, Y:{y.shape}")
         xy = torch.cat([x, y], dim=1)
-        return self.layers(xy)
+        pesq_out = self.layers(xy)
+        gan_out = self.softmax(self.out(pesq_out))
+        return pesq_out, gan_out
+
