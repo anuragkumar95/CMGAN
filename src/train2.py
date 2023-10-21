@@ -210,7 +210,7 @@ class Trainer:
         wandb.log({
             'step_gen_loss':loss,
             'step_disc_loss':discrim_loss_metric,
-            'step_train_pesq':pesq
+            'step_train_pesq':original_pesq(pesq)
         })
 
         return loss.item(), discrim_loss_metric.item()
@@ -238,7 +238,7 @@ class Trainer:
         wandb.log({
             'val_gen_loss':loss,
             'val_disc_loss':discrim_loss_metric,
-            'val_pesq':pesq
+            'val_pesq':original_pesq(pesq)
         })
 
         return loss.item(), discrim_loss_metric.item()
