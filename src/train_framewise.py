@@ -100,7 +100,8 @@ class FrameLevelTrainer:
             self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
             self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
             self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
-            print(f"Loaded checkpoint saved at {resume_pt}")
+            print(f"Loaded checkpoint saved at {resume_pt} starting at epoch {self.start_epoch}")
+            del state_dict
 
         if gpu_id is not None:
             self.model = self.model.to(gpu_id)
