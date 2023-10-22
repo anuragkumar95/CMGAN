@@ -88,7 +88,11 @@ class FrameLevelTrainer:
             self.optimizer_disc, step_size=args.decay_epoch, gamma=0.5
         )
 
+        self.start_epoch = 0
         if resume_pt:
+            if not resume_pt.endswith('.pt'):
+                raise ValueError("Incorrect path to the checkpoint..")
+            self.start_epoch = int(resume_pt.split('.')[0][-1])
             state_dict = torch.load(resume_pt, map_location=torch.device('cpu'))
             self.model.load_state_dict(state_dict['generator_state_dict'])
             self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
@@ -395,7 +399,7 @@ class FrameLevelTrainer:
     def train(self, args):
         best_val_gen_loss = 9999
         best_val_disc_loss = 9999
-        for epoch in range(args.epochs):
+        for epoch in range(self.start_epoch, args.epochs):
             #Run training loop
             gen_ep_loss, disc_ep_loss, ep_pesq = self.train_one_epoch()
             if self.log_wandb:

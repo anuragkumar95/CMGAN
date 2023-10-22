@@ -125,11 +125,11 @@ class Trainer:
             "est_audio": est_audio,
         }
 
-    def calculate_generator_loss(self, generator_outputs, predict_fake_metric):
+    def calculate_generator_loss(self, generator_outputs):
 
-        #fake_pesq, predict_fake_metric = self.discriminator(
-        #    generator_outputs["clean_mag"], generator_outputs["est_mag"]
-        #)
+        predict_fake_metric = self.discriminator(
+            generator_outputs["clean_mag"], generator_outputs["est_mag"]
+        )
         predict_fake_metric = torch.argmax(predict_fake_metric, dim=-1)
 
         gen_loss_GAN = F.mse_loss(
@@ -156,21 +156,21 @@ class Trainer:
 
         return loss
 
-    def calculate_discriminator_loss(self, generator_outputs, predict_enhance_metric, predict_max_metric):
+    def calculate_discriminator_loss(self, generator_outputs):
 
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
         pesq_score = batch_pesq(clean_audio_list, est_audio_list)
-        print(predict_enhance_metric.shape)
+      
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
-            #predict_enhance_metric, gan_out = self.discriminator(
-            #    generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
-            #)
-            #predict_max_metric, gan_max_out = self.discriminator(
-            #    generator_outputs["clean_mag"], generator_outputs["clean_mag"]
-            #)
+            predict_enhance_metric = self.discriminator(
+                generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
+            )
+            predict_max_metric = self.discriminator(
+                generator_outputs["clean_mag"], generator_outputs["clean_mag"]
+            )
             discrim_loss_metric = F.mse_loss(
                 predict_max_metric.flatten(), generator_outputs["one_labels"]
             ) + F.mse_loss(predict_enhance_metric.flatten(), pesq_score)
@@ -196,20 +196,20 @@ class Trainer:
         generator_outputs["clean"] = clean
 
         #Run discriminator
-        fake_pesq, predict_fake_metric = self.discriminator(
-            generator_outputs["clean_mag"], generator_outputs["est_mag"]
-        )
-        max_pesq, max_gan_out = self.discriminator(
-                generator_outputs["clean_mag"], generator_outputs["clean_mag"]
-            )
+        #fake_pesq, predict_fake_metric = self.discriminator(
+        #    generator_outputs["clean_mag"], generator_outputs["est_mag"]
+        #)
+        #max_pesq, max_gan_out = self.discriminator(
+        #        generator_outputs["clean_mag"], generator_outputs["clean_mag"]
+        #    )
 
-        loss = self.calculate_generator_loss(generator_outputs, predict_fake_metric)
+        loss = self.calculate_generator_loss(generator_outputs)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
         # Train Discriminator
-        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs, fake_pesq, max_pesq)
+        discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs)
 
         if discrim_loss_metric is not None:
             self.optimizer_disc.zero_grad()
@@ -245,30 +245,34 @@ class Trainer:
         discrim_loss_metric, pesq = self.calculate_discriminator_loss(generator_outputs)
         if discrim_loss_metric is None:
             discrim_loss_metric = torch.tensor([0.0])
+        
 
-        wandb.log({
-            'val_gen_loss':loss,
-            'val_disc_loss':discrim_loss_metric,
-            'val_pesq':original_pesq(pesq)
-        })
-
-        return loss.item(), discrim_loss_metric.item()
+        return loss.item(), discrim_loss_metric.item(), pesq.item()
 
     def test(self):
         self.model.eval()
         self.discriminator.eval()
         gen_loss_total = 0.0
         disc_loss_total = 0.0
+        val_pesq = 0.0
         for idx, batch in enumerate(self.test_ds):
             step = idx + 1
-            loss, disc_loss = self.test_step(batch)
+            loss, disc_loss, pesq = self.test_step(batch)
             gen_loss_total += loss
             disc_loss_total += disc_loss
+            val_pesq += pesq
         gen_loss_avg = gen_loss_total / step
         disc_loss_avg = disc_loss_total / step
+        val_pesq = val_pesq / step
 
         template = "GPU: {}, Generator loss: {}, Discriminator loss: {}"
         logging.info(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
+
+        wandb.log({
+            'val_gen_loss':gen_loss_avg,
+            'val_disc_loss':disc_loss_avg,
+            'val_pesq':original_pesq(val_pesq)
+        })
 
         return gen_loss_avg
 

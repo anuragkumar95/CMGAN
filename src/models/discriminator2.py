@@ -60,10 +60,8 @@ class Discriminator(nn.Module):
             nn.utils.spectral_norm(nn.Linear(ndf * 4, 1)),
             LearnableSigmoid(1),
         )
-        self.out = nn.Linear(1, 2)
         
     def forward(self, x, y):
         xy = torch.cat([x, y], dim=1)
-        pesq_out = self.layers(xy)
-        gan_out = F.softmax(self.out(pesq_out), dim=-1)
-        return pesq_out, gan_out
+        return self.layers(xy)
+        
