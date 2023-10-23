@@ -11,6 +11,7 @@ import argparse
 import wandb
 import psutil
 from speech_enh_env import SpeechEnhancementAgent
+from collections import OrderedDict
 
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -26,10 +27,12 @@ parser.add_argument("--win_len", type=int, default=24)
 parser.add_argument("--samples", type=int, default=24)
 parser.add_argument("-pt", "--ckpt", type=str, required=False, default=None,
                         help="Path to saved cmgan checkpoint for resuming training.")
-parser.add_argument("--pretrain", type=str, required=False, default=None, 
+parser.add_argument("--pretrain", type=str, required=True, 
                     help="path to the pretrained checkpoint of original CMGAN.")
 parser.add_argument("--mag_only", action='store_true', required=False, 
                     help="set this flag to train using magnitude only.")
+parser.add_argument("--pretrain_init", action='store_true', required=False, 
+                    help="set this flag to init model with pretrainied weights.")
 parser.add_argument("--wandb", action='store_true', required=False, 
                     help="set this flag to log using wandb.")
 parser.add_argument("--log_interval", type=int, default=500)
@@ -47,7 +50,7 @@ args = parser.parse_args()
 logging.basicConfig(level=logging.INFO)
 
 class FrameLevelTrainer:
-    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, log_wandb=False, magnitude_only=False, parallel=False, gpu_id=None, pretrain=None, resume_pt=False):
+    def __init__(self, train_ds, test_ds, win_len, samples, batchsize, pretrain, log_wandb=False, magnitude_only=False, parallel=False, gpu_id=None, pretrain_init=False, resume_pt=None):
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
@@ -65,12 +68,19 @@ class FrameLevelTrainer:
       
         self.discriminator = discriminator.Discriminator(ndf=16)
 
-        if pretrain is not None:
+        if pretrain_init:
             #Load checkpoint
             print(f"Loading pretrained model saved at {args.ckpt}...")
             cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
             #Copy weights and freeze weights which are copied
             keys, self.model = copy_weights(cmgan_state_dict, self.model)
+            self.model = freeze_layers(self.model, keys)
+            #Free mem
+            del cmgan_state_dict
+        else:
+            cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
+            #Get the keys which are supposed to be frozen
+            keys, _ = copy_weights(cmgan_state_dict, self.model, get_keys_only=True)
             self.model = freeze_layers(self.model, keys)
             #Free mem
             del cmgan_state_dict
@@ -89,19 +99,11 @@ class FrameLevelTrainer:
         )
 
         self.start_epoch = 0
-        if resume_pt:
+        if resume_pt is not None:
             if not resume_pt.endswith('.pt'):
                 raise ValueError("Incorrect path to the checkpoint..")
             self.start_epoch = int(resume_pt.split('.')[0][-1])
-            state_dict = torch.load(resume_pt, map_location=torch.device('cpu'))
-            self.model.load_state_dict(state_dict['generator_state_dict'])
-            self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
-            self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
-            self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
-            self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
-            self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
-            print(f"Loaded checkpoint saved at {resume_pt} starting at epoch {self.start_epoch}")
-            del state_dict
+            self.load_checkpoint(resume_pt)
 
         if gpu_id is not None:
             self.model = self.model.to(gpu_id)
@@ -114,6 +116,42 @@ class FrameLevelTrainer:
             wandb.login()
             wandb.init(project=args.exp)
 
+    def load_checkpoint(self, path):
+        try:
+            state_dict = torch.load(path, map_location=torch.device('cpu'))
+            self.model.load_state_dict(state_dict['generator_state_dict'])
+            self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
+            self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
+            self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
+            self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
+            self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
+            print(f"Loaded checkpoint saved at {path} starting at epoch {self.start_epoch}")
+            del state_dict
+            
+        except Exception as e:
+            state_dict = torch.load(path, map_location=torch.device('cpu'))
+            
+            gen_state_dict = OrderedDict()
+            for name, params in state_dict['generator_state_dict'].items():
+                name = name[7:]
+                gen_state_dict[name] = params        
+            self.model.load_state_dict(gen_state_dict)
+            del gen_state_dict
+            
+            disc_state_dict = OrderedDict()
+            for name, params in state_dict['discriminator_state_dict'].items():
+                name = name[7:]
+                disc_state_dict[name] = params
+            self.discriminator.load_state_dict(disc_state_dict)
+            del disc_state_dict
+            
+            self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
+            self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
+            self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
+            self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
+            
+            print(f"Loaded checkpoint saved at {path} starting at epoch {self.start_epoch}")
+            del state_dict
     
     def create_spectrograms(self, noisy, clean):
         """
@@ -495,6 +533,7 @@ def main(rank: int, world_size: int, args):
                                 parallel=args.parallel, 
                                 gpu_id=rank, 
                                 pretrain=args.pretrain,
+                                pretrain_init=args.pretrain_init
                                 resume_pt=args.ckpt,
                                 magnitude_only=args.mag_only,
                                 log_wandb=args.wandb)

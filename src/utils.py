@@ -49,7 +49,7 @@ class LearnableSigmoid(nn.Module):
     def forward(self, x):
         return self.beta * torch.sigmoid(self.slope * x)
     
-def copy_weights(src_state_dict, target):
+def copy_weights(src_state_dict, target, get_keys_only=False):
     """
     Copy weights from src model to target model.
     Only common layers are transferred.
@@ -73,7 +73,8 @@ def copy_weights(src_state_dict, target):
             copied_keys.append(target_key)
     
     #update the state dict of the target model
-    target.load_state_dict(target_layers)
+    if not get_keys_only:
+        target.load_state_dict(target_layers)
     
     return copied_keys, target
         
