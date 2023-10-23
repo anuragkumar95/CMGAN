@@ -152,7 +152,7 @@ class MaskDecoder(nn.Module):
         #as we learn a distribution
         x_mu = self.out_mu(x)
         #x_sigma = self.relu(self.out_var(x))
-        x_var = torch.log(self.out_var(x))
+        x_var = self.out_var(x)
         return x_mu, x_var
 
 class ComplexDecoder(nn.Module):
@@ -182,7 +182,7 @@ class ComplexDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x.permute(0,1,3,2))
-        x_var = torch.log(self.out_var(x.permute(0,1,3,2)))
+        x_var = self.out_var(x.permute(0,1,3,2))
         return x_mu, x_var
 
 class TSCNet(nn.Module):
