@@ -331,10 +331,10 @@ class FrameLevelTrainer:
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
             
-            predict_enhance_metric, _ = self.discriminator(
+            predict_enhance_metric = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["est_mag"].detach()
             )
-            predict_max_metric, _ = self.discriminator(
+            predict_max_metric = self.discriminator(
                 generator_outputs["clean_mag"], generator_outputs["clean_mag"]
             )
             discrim_loss_metric = F.mse_loss(
