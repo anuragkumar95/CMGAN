@@ -66,7 +66,7 @@ class FrameLevelTrainer:
         self.mag_only = magnitude_only
         self.log_wandb = log_wandb
         self.gpu_id = gpu_id
-        
+
         self.discriminator = discriminator.Discriminator(ndf=16)
 
         if pretrain_init:
@@ -288,7 +288,7 @@ class FrameLevelTrainer:
          
     def calculate_generator_loss(self, generator_outputs):
        
-        _, predict_fake_metric = self.discriminator(
+        predict_fake_metric = self.discriminator(
             generator_outputs["clean_mag"], generator_outputs["est_mag"]
         )
         gen_loss_GAN = F.mse_loss(
