@@ -533,7 +533,7 @@ def main(rank: int, world_size: int, args):
                                 parallel=args.parallel, 
                                 gpu_id=rank, 
                                 pretrain=args.pretrain,
-                                pretrain_init=args.pretrain_init
+                                pretrain_init=args.pretrain_init,
                                 resume_pt=args.ckpt,
                                 magnitude_only=args.mag_only,
                                 log_wandb=args.wandb)
