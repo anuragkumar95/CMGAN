@@ -182,7 +182,7 @@ class ComplexDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x.permute(0,1,3,2))
-        x_var = torch.log(self.out_sigma(x.permute(0,1,3,2)))
+        x_var = torch.log(self.out_var(x.permute(0,1,3,2)))
         return x_mu, x_var
 
 class TSCNet(nn.Module):
@@ -224,8 +224,8 @@ class TSCNet(nn.Module):
         out_5 = self.TSCB_4(out_4)
 
         #Sample mask from the output distribution k times and take the average.
-        mask_mu, mask_sigma = self.mask_decoder(out_5)
-        mask = self.mask_decoder.sample(mask_mu, mask_sigma)
+        mask_mu, mask_var = self.mask_decoder(out_5)
+        mask = self.mask_decoder.sample(mask_mu, mask_var)
         
         #Output mask is for the middle frame of the window
         out_mag = mask * mag[:, :, win_len//2 + 1, :].unsqueeze(2)
@@ -233,8 +233,8 @@ class TSCNet(nn.Module):
         mag_imag = (out_mag * torch.sin(noisy_phase[:, :, win_len//2 + 1, :].unsqueeze(2))).permute(0, 1, 3, 2)
         
         if not mag_only:
-            complex_mu, complex_sigma = self.complex_decoder(out_5)
-            complex_out = self.complex_decoder.sample(complex_mu, complex_sigma)
+            complex_mu, complex_var = self.complex_decoder(out_5)
+            complex_out = self.complex_decoder.sample(complex_mu, complex_var)
             final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)
             final_imag = mag_imag + complex_out[:, 1, :, :].unsqueeze(1)
             return final_real, final_imag
