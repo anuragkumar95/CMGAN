@@ -65,7 +65,8 @@ class FrameLevelTrainer:
         self.batchsize = batchsize
         self.mag_only = magnitude_only
         self.log_wandb = log_wandb
-      
+        self.gpu_id = gpu_id
+        
         self.discriminator = discriminator.Discriminator(ndf=16)
 
         if pretrain_init:
@@ -84,6 +85,10 @@ class FrameLevelTrainer:
             self.model = freeze_layers(self.model, keys)
             #Free mem
             del cmgan_state_dict
+
+        if gpu_id is not None:
+            self.model = self.model.to(gpu_id)
+            self.discriminator = self.discriminator.to(gpu_id)
 
         #optimizers and schedulers
         self.optimizer = torch.optim.AdamW(filter(lambda layer:layer.requires_grad,self.model.parameters()), 
@@ -108,20 +113,17 @@ class FrameLevelTrainer:
                 self.start_epoch = int(resume_pt[-4])
             self.load_checkpoint(resume_pt)
 
-        if gpu_id is not None:
-            self.model = self.model.to(gpu_id)
-            self.discriminator = self.discriminator.to(gpu_id)
-            if parallel:
-                self.model = DDP(self.model, device_ids=[gpu_id])
-                self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
-        self.gpu_id = gpu_id
+        if parallel:
+            self.model = DDP(self.model, device_ids=[gpu_id])
+            self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
+        
         if log_wandb:
             wandb.login()
             wandb.init(project=args.exp)
 
     def load_checkpoint(self, path):
         try:
-            state_dict = torch.load(path, map_location=torch.device('cpu'))
+            state_dict = torch.load(path, map_location=torch.device(self.gpu_id))
             self.model.load_state_dict(state_dict['generator_state_dict'])
             self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
             self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
@@ -132,7 +134,7 @@ class FrameLevelTrainer:
             del state_dict
             
         except Exception as e:
-            state_dict = torch.load(path, map_location=torch.device('cpu'))
+            state_dict = torch.load(path, map_location=torch.device(self.gpu_id))
             
             gen_state_dict = OrderedDict()
             for name, params in state_dict['generator_state_dict'].items():
