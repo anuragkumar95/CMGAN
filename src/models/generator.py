@@ -129,14 +129,15 @@ class MaskDecoder(nn.Module):
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
-        self.relu = nn.ReLU()
+        #self.relu = nn.ReLU()
         #Predict mask for the middle frame of window
         self.out_mu = nn.Linear(signal_window, 1)
-        self.out_sigma = nn.Linear(signal_window, 1)
+        self.out_var = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
 
-    def sample(self, mu, sigma):
+    def sample(self, mu, logvar):
+        sigma = torch.exp(0.5 * logvar)
         x = mu + sigma * self.N.sample(mu.shape).to(self.gpu_id)
         x = self.prelu_out(x)
         return x.permute(0, 2, 1).unsqueeze(1)
@@ -150,8 +151,9 @@ class MaskDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x)
-        x_sigma = self.relu(self.out_sigma(x))
-        return x_mu, x_sigma
+        #x_sigma = self.relu(self.out_var(x))
+        x_var = torch.log(self.out_var(x))
+        return x_mu, x_var
 
 class ComplexDecoder(nn.Module):
     def __init__(self, num_channel=64, signal_window=51, gpu_id=None):
@@ -162,12 +164,13 @@ class ComplexDecoder(nn.Module):
         self.norm = nn.InstanceNorm2d(num_channel, affine=True)
         self.conv = nn.Conv2d(num_channel, 2, (1, 2))
         self.out_mu = nn.Linear(signal_window, 1)
-        self.out_sigma = nn.Linear(signal_window, 1)
+        self.out_var = nn.Linear(signal_window, 1)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
-        self.relu = nn.ReLU()
+        #self.relu = nn.ReLU()
 
-    def sample(self, mu, sigma):
+    def sample(self, mu, logvar):
+        sigma = torch.exp(0.5 * logvar)
         x = mu + sigma * self.N.sample(mu.shape).to(self.gpu_id)
         return x
 
@@ -179,8 +182,8 @@ class ComplexDecoder(nn.Module):
         #Predict mask for the middle frame of the input window
         #as we learn a distribution
         x_mu = self.out_mu(x.permute(0,1,3,2))
-        x_sigma = self.relu(self.out_sigma(x.permute(0,1,3,2)))
-        return x_mu, x_sigma
+        x_var = torch.log(self.out_sigma(x.permute(0,1,3,2)))
+        return x_mu, x_var
 
 class TSCNet(nn.Module):
     def __init__(self, num_channel=64, num_features=201, win_len=51, mag_only=False, gpu_id=None):
