@@ -102,7 +102,10 @@ class FrameLevelTrainer:
         if resume_pt is not None:
             if not resume_pt.endswith('.pt'):
                 raise ValueError("Incorrect path to the checkpoint..")
-            self.start_epoch = int(resume_pt.split('.')[0][-1])
+            try:
+                self.start_epoch = int(resume_pt[-5:-4])
+            except Exception:
+                self.start_epoch = int(resume_pt[-4])
             self.load_checkpoint(resume_pt)
 
         if gpu_id is not None:
