@@ -71,7 +71,7 @@ class FrameLevelTrainer:
 
         if pretrain_init:
             #Load checkpoint
-            print(f"Loading pretrained model saved at {args.ckpt}...")
+            print(f"Loading pretrained model saved at {args.pretrain}...")
             cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
             #Copy weights and freeze weights which are copied
             keys, self.model = copy_weights(cmgan_state_dict, self.model)
@@ -380,6 +380,12 @@ class FrameLevelTrainer:
         self.model.train()
         self.discriminator.train()
         for i, batch in enumerate(self.train_ds):
+            #Calculate noisy pesq
+            clean, noisy, _ = batch
+            pesq_mask, pesq_score = discriminator.batch_pesq(clean, noisy)
+            noisy_pesq = (pesq_mask * pesq_score).mean()
+            
+            #Enhance signal
             batch = self.preprocess_batch(batch)
             step_gen_loss, step_disc_loss, step_pesq = self.train_one_step(batch)
             if self.log_wandb:
@@ -388,10 +394,11 @@ class FrameLevelTrainer:
                     'step_gen_loss':step_gen_loss,
                     'step_disc_loss':step_disc_loss,
                     'step_train_pesq':step_pesq,
-                    'gen_lr':self.scheduler_G.get_last_lr(),
-                    'disc_lr':self.scheduler_D.get_last_lr()
+                    'step_noisy_pesq':noisy_pesq,
+                    'gen_lr':self.scheduler_G.get_last_lr()[0],
+                    'disc_lr':self.scheduler_D.get_last_lr()[0]
                 })
-            print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}")
+            print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}, PESQ:{step_pesq}")
             gen_ep_loss += step_gen_loss
             disc_ep_loss += step_disc_loss
             ep_pesq += step_pesq
