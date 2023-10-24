@@ -217,7 +217,7 @@ class FrameLevelTrainer:
             Dict of spectrograms
         """
         clean, noisy, _ = batch
-        one_labels = torch.ones(args.batch_size)
+        one_labels = torch.ones(clean.shape[0])
         if self.gpu_id is not None:
             clean = clean.to(self.gpu_id)
             noisy = noisy.to(self.gpu_id)
