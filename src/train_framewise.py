@@ -493,7 +493,9 @@ class FrameLevelTrainer:
         Save model at path_root
         """
         checkpoint_prefix = f"{exp}_PESQ_{pesq}_epoch_{epoch}.pt"
-        path = os.path.join(path_root, checkpoint_prefix)
+        path = os.path.join(path_root, exp)
+        os.makedirs(path, exist_ok=True)
+        path = os.path.join(path, checkpoint_prefix)
         if self.gpu_id == 0:
             save_dict = {'generator_state_dict':self.model.module.state_dict(), 
                         'discriminator_state_dict':self.discriminator.module.state_dict(),
