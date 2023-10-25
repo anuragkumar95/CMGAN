@@ -415,23 +415,32 @@ class FrameLevelTrainer:
         gen_val_loss = 0
         disc_val_loss = 0
         val_pesq = 0
+        val_noisy_pesq = 0
         steps = len(self.test_ds)
         self.model.eval()
         self.discriminator.eval()
         for _, batch in enumerate(self.test_ds):
             batch = self.preprocess_batch(batch)
+            #Calculate noisy pesq
+            clean, noisy, _ = batch
+            clean_list = clean.detach().cpu().numpy()
+            noisy_list = noisy.detach().cpu().numpy()
+            pesq_mask, pesq_score = discriminator.batch_pesq(clean_list, noisy_list)
+            noisy_pesq = (pesq_mask * pesq_score).mean()
+
             step_gen_loss, step_disc_loss, step_pesq = self.run_validation_step(batch)
             
             gen_val_loss += step_gen_loss
             disc_val_loss += step_disc_loss
             val_pesq += step_pesq
+            val_noisy_pesq += noisy_pesq
 
         gen_val_loss = gen_val_loss / steps
         disc_val_loss = disc_val_loss / steps
         val_pesq = val_pesq / steps
+        val_noisy_pesq = val_noisy_pesq / steps
 
-        
-        return gen_val_loss, disc_val_loss, val_pesq
+        return gen_val_loss, disc_val_loss, val_pesq, val_noisy_pesq
 
     def run_validation_step(self, batch):
         agent = SpeechEnhancementAgent(window=self.win_len // 2, 
@@ -464,16 +473,19 @@ class FrameLevelTrainer:
                     "ep_train_pesq":ep_pesq
                 })
             print(f"Epoch:{epoch}, Train_G_Loss:{gen_ep_loss}, Train_D_Loss:{disc_ep_loss}, Train_PESQ:{ep_pesq}")
+            print(f"Running validation loop...")
             
             #Run validation loop
-            gen_val_loss, disc_val_loss, val_pesq = self.run_validation()
+            gen_val_loss, disc_val_loss, val_pesq, val_noisy_pesq = self.run_validation()
             if self.log_wandb:
                 wandb.log({
                     "Epoch":epoch,
                     "val_gen_loss":gen_val_loss,
                     "val_disc_loss":disc_val_loss,
-                    "val_pesq":val_pesq
+                    "val_pesq":val_pesq,
+                    "val_noisy_pesq":val_noisy_pesq,
                 })
+
             print(f"Epoch:{epoch}, Val_G_Loss:{gen_val_loss}, Val_D_Loss:{disc_val_loss}, Val_PESQ:{val_pesq}")
 
             if gen_val_loss <= best_val_gen_loss or disc_val_loss <= best_val_disc_loss:
