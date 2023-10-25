@@ -382,7 +382,9 @@ class FrameLevelTrainer:
         for i, batch in enumerate(self.train_ds):
             #Calculate noisy pesq
             clean, noisy, _ = batch
-            pesq_mask, pesq_score = discriminator.batch_pesq(clean, noisy)
+            clean_list = clean.detach().cpu().numpy()
+            noisy_list = noisy.detach().cpu().numpy()
+            pesq_mask, pesq_score = discriminator.batch_pesq(clean_list, noisy_list)
             noisy_pesq = (pesq_mask * pesq_score).mean()
             
             #Enhance signal
