@@ -406,6 +406,7 @@ class FrameLevelTrainer:
                 disc_ep_loss += step_disc_loss
                 ep_pesq += step_pesq
             except Exception as e:
+                print(e)
                 continue
 
         gen_ep_loss = gen_ep_loss / steps
