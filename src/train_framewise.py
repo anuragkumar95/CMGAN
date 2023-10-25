@@ -389,25 +389,22 @@ class FrameLevelTrainer:
             
             #Enhance signal
             batch = self.preprocess_batch(batch)
-            try:
-                step_gen_loss, step_disc_loss, step_pesq = self.train_one_step(batch)
-                if self.log_wandb:
-                    wandb.log({
-                        'step': i+1,
-                        'step_gen_loss':step_gen_loss,
-                        'step_disc_loss':step_disc_loss,
-                        'step_train_pesq':step_pesq,
-                        'step_noisy_pesq':noisy_pesq,
-                        'gen_lr':self.scheduler_G.get_last_lr()[0],
-                        'disc_lr':self.scheduler_D.get_last_lr()[0]
-                    })
-                print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}, PESQ:{step_pesq}")
-                gen_ep_loss += step_gen_loss
-                disc_ep_loss += step_disc_loss
-                ep_pesq += step_pesq
-            except Exception as e:
-                print(e)
-                continue
+            
+            step_gen_loss, step_disc_loss, step_pesq = self.train_one_step(batch)
+            if self.log_wandb:
+                wandb.log({
+                    'step': i+1,
+                    'step_gen_loss':step_gen_loss,
+                    'step_disc_loss':step_disc_loss,
+                    'step_train_pesq':step_pesq,
+                    'step_noisy_pesq':noisy_pesq,
+                    'gen_lr':self.scheduler_G.get_last_lr()[0],
+                    'disc_lr':self.scheduler_D.get_last_lr()[0]
+                })
+            print(f"Step:{i+1},  G_Loss:{step_gen_loss}, D_Loss:{step_disc_loss}, PESQ:{step_pesq}")
+            gen_ep_loss += step_gen_loss
+            disc_ep_loss += step_disc_loss
+            ep_pesq += step_pesq
 
         gen_ep_loss = gen_ep_loss / steps
         disc_ep_loss = disc_ep_loss / steps
