@@ -420,14 +420,14 @@ class FrameLevelTrainer:
         self.model.eval()
         self.discriminator.eval()
         for _, batch in enumerate(self.test_ds):
-            batch = self.preprocess_batch(batch)
             #Calculate noisy pesq
             clean, noisy, _ = batch
             clean_list = clean.detach().cpu().numpy()
             noisy_list = noisy.detach().cpu().numpy()
             pesq_mask, pesq_score = discriminator.batch_pesq(clean_list, noisy_list)
             noisy_pesq = (pesq_mask * pesq_score).mean()
-
+            
+            batch = self.preprocess_batch(batch)
             step_gen_loss, step_disc_loss, step_pesq = self.run_validation_step(batch)
             
             gen_val_loss += step_gen_loss
