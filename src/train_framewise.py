@@ -397,7 +397,7 @@ class FrameLevelTrainer:
                     'step_gen_loss':step_gen_loss,
                     'step_disc_loss':step_disc_loss,
                     'step_train_pesq':step_pesq,
-                    'step_noisy_pesq':noisy_pesq,
+                    'step_noisy_pesq':original_pesq(noisy_pesq),
                     'gen_lr':self.scheduler_G.get_last_lr()[0],
                     'disc_lr':self.scheduler_D.get_last_lr()[0]
                 })
@@ -440,7 +440,7 @@ class FrameLevelTrainer:
         val_pesq = val_pesq / steps
         val_noisy_pesq = val_noisy_pesq / steps
 
-        return gen_val_loss, disc_val_loss, val_pesq, val_noisy_pesq
+        return gen_val_loss, disc_val_loss, val_pesq, original_pesq(val_noisy_pesq)
 
     def run_validation_step(self, batch):
         agent = SpeechEnhancementAgent(window=self.win_len // 2, 

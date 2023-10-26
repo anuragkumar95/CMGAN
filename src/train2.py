@@ -181,7 +181,6 @@ class Trainer:
         return discrim_loss_metric, pesq_score.mean()
 
     def train_step(self, batch):
-
         # Trainer generator
         clean = batch[0].to(self.gpu_id)
         noisy = batch[1].to(self.gpu_id)
@@ -194,14 +193,6 @@ class Trainer:
         )
         generator_outputs["one_labels"] = one_labels
         generator_outputs["clean"] = clean
-
-        #Run discriminator
-        #fake_pesq, predict_fake_metric = self.discriminator(
-        #    generator_outputs["clean_mag"], generator_outputs["est_mag"]
-        #)
-        #max_pesq, max_gan_out = self.discriminator(
-        #        generator_outputs["clean_mag"], generator_outputs["clean_mag"]
-        #    )
 
         loss = self.calculate_generator_loss(generator_outputs)
         self.optimizer.zero_grad()
