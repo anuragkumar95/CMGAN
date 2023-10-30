@@ -108,7 +108,9 @@ class FrameLevelTrainer:
             if not resume_pt.endswith('.pt'):
                 raise ValueError("Incorrect path to the checkpoint..")
             try:
-                self.start_epoch = int(resume_pt[-5:-4])
+                name = name[:-3]
+                epoch = name.split('_')[-1]
+                self.start_epoch = int(epoch)
             except Exception:
                 self.start_epoch = int(resume_pt[-4])
             self.load_checkpoint(resume_pt)
