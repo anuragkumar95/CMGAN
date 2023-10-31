@@ -173,7 +173,7 @@ class ComplexDecoder(nn.Module):
 
 
 class TSCNet(nn.Module):
-    def __init__(self, num_channel=64, num_features=201):
+    def __init__(self, num_channel=64, num_features=201, gpu_id=None):
         super(TSCNet, self).__init__()
         self.dense_encoder = DenseEncoder(in_channel=3, channels=num_channel)
 
@@ -183,7 +183,7 @@ class TSCNet(nn.Module):
         self.TSCB_4 = TSCB(num_channel=num_channel)
 
         self.mask_decoder = MaskDecoder(
-            num_features, num_channel=num_channel, out_channel=1
+            num_features, num_channel=num_channel, out_channel=1, gpu_id=gpu_id
         )
         self.complex_decoder = ComplexDecoder(num_channel=num_channel)
 
