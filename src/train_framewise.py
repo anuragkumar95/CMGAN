@@ -27,7 +27,7 @@ parser.add_argument("--win_len", type=int, default=24)
 parser.add_argument("--samples", type=int, default=24)
 parser.add_argument("-pt", "--ckpt", type=str, required=False, default=None,
                         help="Path to saved cmgan checkpoint for resuming training.")
-parser.add_argument("--pretrain", type=str, required=True, 
+parser.add_argument("--pretrain", type=str, required=False, 
                     help="path to the pretrained checkpoint of original CMGAN.")
 parser.add_argument("--mag_only", action='store_true', required=False, 
                     help="set this flag to train using magnitude only.")
