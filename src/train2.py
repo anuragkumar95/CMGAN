@@ -292,7 +292,7 @@ class Trainer:
                     )
             gen_loss = self.test()
             path = os.path.join(
-                args.save_model_dir,
+                args.save_model_dir, args.exp, 
                 "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
             )
             if not os.path.exists(args.save_model_dir):
