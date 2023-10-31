@@ -9,6 +9,7 @@ import logging
 from torchinfo import summary
 import argparse
 
+
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
@@ -161,7 +162,11 @@ class Trainer:
         length = generator_outputs["est_audio"].size(-1)
         est_audio_list = list(generator_outputs["est_audio"].detach().cpu().numpy())
         clean_audio_list = list(generator_outputs["clean"].cpu().numpy()[:, :length])
-        pesq_score = batch_pesq(clean_audio_list, est_audio_list)
+        pesq_mask, pesq_score = batch_pesq(clean_audio_list, est_audio_list)
+
+        if self.gpu_id is not None:
+            pesq_score = pesq_score.to(self.gpu_id)
+            pesq_mask = pesq_mask.to(self.gpu_id)
       
         # The calculation of PESQ can be None due to silent part
         if pesq_score is not None:
@@ -173,7 +178,7 @@ class Trainer:
             )
             discrim_loss_metric = F.mse_loss(
                 predict_max_metric.flatten(), generator_outputs["one_labels"]
-            ) + F.mse_loss(predict_enhance_metric.flatten(), pesq_score)
+            ) + F.mse_loss(predict_enhance_metric.flatten() * pesq_mask, pesq_score * pesq_mask)
         else:
             discrim_loss_metric = None
             pesq_score = torch.tensor([0.0])
