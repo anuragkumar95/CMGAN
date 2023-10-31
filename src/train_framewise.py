@@ -78,7 +78,7 @@ class FrameLevelTrainer:
             self.model = freeze_layers(self.model, keys)
             #Free mem
             del cmgan_state_dict
-        else:
+        elif pretrain is not None:
             cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
             #Get the keys which are supposed to be frozen
             keys, _ = copy_weights(cmgan_state_dict, self.model, get_keys_only=True)
@@ -108,7 +108,7 @@ class FrameLevelTrainer:
             if not resume_pt.endswith('.pt'):
                 raise ValueError("Incorrect path to the checkpoint..")
             try:
-                name = name[:-3]
+                name = resume_pt[:-3]
                 epoch = name.split('_')[-1]
                 self.start_epoch = int(epoch)
             except Exception:
