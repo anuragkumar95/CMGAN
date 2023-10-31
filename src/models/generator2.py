@@ -127,10 +127,9 @@ class MaskDecoder(nn.Module):
         self.conv_1 = nn.Conv2d(num_channel, out_channel, (1, 2))
         self.norm = nn.InstanceNorm2d(out_channel, affine=True)
         self.prelu = nn.PReLU(out_channel)
-        self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
+        self.final_conv_mu = nn.Conv2d(out_channel, out_channel, (1, 1))
+        self.final_conv_var = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
-        self.mu = nn.Linear(out_channel * 201 * 321, out_channel * 201 * 321)
-        self.var = nn.Linear(out_channel * 201 * 321, out_channel * 201 * 321)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
 
@@ -144,13 +143,9 @@ class MaskDecoder(nn.Module):
         x = self.sub_pixel(x)
         x = self.conv_1(x)
         x = self.prelu(self.norm(x))
-        x = self.final_conv(x).permute(0, 3, 2, 1).squeeze(-1)
-        b, t, f = x.shape
-        x = x.reshape(b, t * f)
-        x_mu = self.mu(x)
-        x_var = self.var(x)
+        x_mu = self.final_conv_mu(x).permute(0, 3, 2, 1).squeeze(-1)
+        x_var = self.final_conv_var(x).permute(0, 3, 2, 1).squeeze(-1)
         x = self.sample(x_mu, x_var)
-        x = x.reshape(b, t, f)
         return self.prelu_out(x).permute(0, 2, 1).unsqueeze(1)
         
 
@@ -180,7 +175,7 @@ class TSCNet(nn.Module):
         self.TSCB_1 = TSCB(num_channel=num_channel)
         self.TSCB_2 = TSCB(num_channel=num_channel)
         self.TSCB_3 = TSCB(num_channel=num_channel)
-        #self.TSCB_4 = TSCB(num_channel=num_channel)
+        self.TSCB_4 = TSCB(num_channel=num_channel)
 
         self.mask_decoder = MaskDecoder(
             num_features, num_channel=num_channel, out_channel=1, gpu_id=gpu_id
