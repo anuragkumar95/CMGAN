@@ -319,5 +319,4 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     print(f"World_size:{world_size}")
-    world_size=1
     mp.spawn(main, args=(world_size, args), nprocs=world_size)
