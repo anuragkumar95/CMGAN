@@ -133,7 +133,6 @@ class Trainer:
         )
         predict_fake_metric = torch.argmax(predict_fake_metric, dim=-1)
 
-        generator_outputs["one_labels"] = generator_outputs["one_labels"][:predict_fake_metric.flatten().shape[0]]
 
         gen_loss_GAN = F.mse_loss(
             predict_fake_metric.flatten(), generator_outputs["one_labels"].float()
@@ -298,7 +297,7 @@ class Trainer:
                 "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
             )
             if not os.path.exists(args.save_model_dir):
-                os.makedirs(args.save_model_dir)
+                os.makedirs(os.path.join(args.save_model_dir, args.exp), exist_ok=True)
             if self.gpu_id == 0:
                 torch.save(self.model.module.state_dict(), path)
             scheduler_G.step()
