@@ -120,7 +120,7 @@ class SPConvTranspose2d(nn.Module):
 
 
 class MaskDecoder(nn.Module):
-    def __init__(self, num_features, num_channel=64, out_channel=1):
+    def __init__(self, num_features, num_channel=64, out_channel=1, gpu_id=None):
         super(MaskDecoder, self).__init__()
         self.dense_block = DilatedDenseNet(depth=4, in_channels=num_channel)
         self.sub_pixel = SPConvTranspose2d(num_channel, num_channel, (1, 3), 2)
@@ -129,6 +129,15 @@ class MaskDecoder(nn.Module):
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
+        self.mu = nn.Linear(out_channel * 201 * 320, out_channel * 201 * 320)
+        self.var = nn.Linear(out_channel * 201 * 320, out_channel * 201 * 320)
+        self.N = torch.distributions.Normal(0, 1)
+        self.gpu_id = gpu_id
+
+    def sample(self, mu, logvar):
+        sigma = torch.exp(0.5 * logvar)
+        x = mu + sigma * self.N.sample(mu.shape).to(self.gpu_id)
+        return x
 
     def forward(self, x):
         x = self.dense_block(x)
@@ -136,7 +145,14 @@ class MaskDecoder(nn.Module):
         x = self.conv_1(x)
         x = self.prelu(self.norm(x))
         x = self.final_conv(x).permute(0, 3, 2, 1).squeeze(-1)
+        b, t, f = x.shape
+        x = x.reshape(b, t * f)
+        x_mu = self.mu(x)
+        x_var = self.var(x)
+        x = self.sample(x_mu, x_var)
+        x = x.reshape(b, t, f)
         return self.prelu_out(x).permute(0, 2, 1).unsqueeze(1)
+        
 
 
 class ComplexDecoder(nn.Module):
