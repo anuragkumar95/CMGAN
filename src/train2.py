@@ -50,11 +50,11 @@ class Trainer:
         self.hop = 100
         self.train_ds = train_ds
         self.test_ds = test_ds
-        self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1, gpu_id=gpu_id).cuda()
+        self.model = TSCNet(num_channel=64, num_features=self.n_fft // 2 + 1, gpu_id=gpu_id).to(gpu_id)
         #summary(
         #    self.model, [(1, 2, args.cut_len // self.hop + 1, int(self.n_fft / 2) + 1)]
         #)
-        self.discriminator = Discriminator(ndf=16).cuda()
+        self.discriminator = Discriminator(ndf=16).to(gpu_id)
         #summary(
         #    self.discriminator,
         #    [
