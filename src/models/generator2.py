@@ -180,7 +180,7 @@ class TSCNet(nn.Module):
         self.TSCB_1 = TSCB(num_channel=num_channel)
         self.TSCB_2 = TSCB(num_channel=num_channel)
         self.TSCB_3 = TSCB(num_channel=num_channel)
-        self.TSCB_4 = TSCB(num_channel=num_channel)
+        #self.TSCB_4 = TSCB(num_channel=num_channel)
 
         self.mask_decoder = MaskDecoder(
             num_features, num_channel=num_channel, out_channel=1, gpu_id=gpu_id
@@ -198,12 +198,12 @@ class TSCNet(nn.Module):
         out_2 = self.TSCB_1(out_1)
         out_3 = self.TSCB_2(out_2)
         out_4 = self.TSCB_3(out_3)
-        out_5 = self.TSCB_4(out_4)
+        #out_5 = self.TSCB_4(out_4)
 
-        mask = self.mask_decoder(out_5)
+        mask = self.mask_decoder(out_4)
         out_mag = mask * mag
 
-        complex_out = self.complex_decoder(out_5)
+        complex_out = self.complex_decoder(out_4)
         mag_real = out_mag * torch.cos(noisy_phase)
         mag_imag = out_mag * torch.sin(noisy_phase)
         final_real = mag_real + complex_out[:, 0, :, :].unsqueeze(1)
