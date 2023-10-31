@@ -129,8 +129,8 @@ class MaskDecoder(nn.Module):
         self.prelu = nn.PReLU(out_channel)
         self.final_conv = nn.Conv2d(out_channel, out_channel, (1, 1))
         self.prelu_out = nn.PReLU(num_features, init=-0.25)
-        self.mu = nn.Linear(out_channel * 201 * 320, out_channel * 201 * 320)
-        self.var = nn.Linear(out_channel * 201 * 320, out_channel * 201 * 320)
+        self.mu = nn.Linear(out_channel * 201 * 321, out_channel * 201 * 321)
+        self.var = nn.Linear(out_channel * 201 * 321, out_channel * 201 * 321)
         self.N = torch.distributions.Normal(0, 1)
         self.gpu_id = gpu_id
 
