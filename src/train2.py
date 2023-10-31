@@ -133,6 +133,8 @@ class Trainer:
         )
         predict_fake_metric = torch.argmax(predict_fake_metric, dim=-1)
 
+        generator_outputs["one_labels"] = generator_outputs["one_labels"][:predict_fake_metric.flatten().shape[0]]
+
         gen_loss_GAN = F.mse_loss(
             predict_fake_metric.flatten(), generator_outputs["one_labels"].float()
         )
