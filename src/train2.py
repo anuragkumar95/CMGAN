@@ -4,10 +4,11 @@ import os
 from data import dataloader
 import torch.nn.functional as F
 import torch
-from utils import power_compress, power_uncompress, original_pesq
+from utils import power_compress, power_uncompress, original_pesq, copy_weights, freeze_layers
 import logging
 from torchinfo import summary
 import argparse
+from collections import OrderedDict
 
 
 import torch.multiprocessing as mp
@@ -16,19 +17,33 @@ from torch.distributed import init_process_group, destroy_process_group
 import wandb
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--exp", type=str, default='default', help="experiment name")
 parser.add_argument("--epochs", type=int, default=120, help="number of epochs of training")
+parser.add_argument("--parallel", action='store_true', help="Set this falg to run parallel gpu training.")
+parser.add_argument("--gpu", action='store_true', help="Set this falg to run single gpu training.")
 parser.add_argument("--batch_size", type=int, default=4)
+parser.add_argument("--exp", type=str, default='default', help='Experiment name')
+parser.add_argument("--win_len", type=int, default=24)
+parser.add_argument("--samples", type=int, default=24)
+parser.add_argument("-pt", "--ckpt", type=str, required=False, default=None,
+                        help="Path to saved cmgan checkpoint for resuming training.")
+parser.add_argument("--pretrain", type=str, required=False, 
+                    help="path to the pretrained checkpoint of original CMGAN.")
+parser.add_argument("--mag_only", action='store_true', required=False, 
+                    help="set this flag to train using magnitude only.")
+parser.add_argument("--pretrain_init", action='store_true', required=False, 
+                    help="set this flag to init model with pretrainied weights.")
+parser.add_argument("--wandb", action='store_true', required=False, 
+                    help="set this flag to log using wandb.")
 parser.add_argument("--log_interval", type=int, default=500)
 parser.add_argument("--decay_epoch", type=int, default=30, help="epoch from which to start lr decay")
 parser.add_argument("--init_lr", type=float, default=5e-4, help="initial learning rate")
 parser.add_argument("--cut_len", type=int, default=16000*2, help="cut length, default is 2 seconds in denoise "
                                                                  "and dereverberation")
-parser.add_argument("--data_dir", type=str, default='dir to VCTK-DEMAND dataset',
+parser.add_argument("--data_dir", type=str, required=True,
                     help="dir of VCTK+DEMAND dataset")
-parser.add_argument("--save_model_dir", type=str, default='./saved_model',
+parser.add_argument("--save_model_dir", type=str, required=True,
                     help="dir of saved model")
-parser.add_argument("--loss_weights", type=list, default=[0.1, 0.9, 0.2, 0.05],
+parser.add_argument("--loss_weights", nargs='+', type=float, default=[0.3, 0.7, 0.01, 1],
                     help="weights of RI components, magnitude, time loss, and Metric Disc")
 args = parser.parse_args()
 logging.basicConfig(level=logging.INFO)
@@ -46,7 +61,8 @@ def ddp_setup(rank, world_size):
 
 
 class Trainer:
-    def __init__(self, train_ds, test_ds, gpu_id: int):
+    def __init__(self, train_ds, test_ds, batchsize, pretrain, log_wandb=False, parallel=False, gpu_id=None, pretrain_init=False, resume_pt=None):
+        """
         self.n_fft = 400
         self.hop = 100
         self.train_ds = train_ds
@@ -73,6 +89,75 @@ class Trainer:
         self.gpu_id = gpu_id
         wandb.login()
         wandb.init(project=args.exp)
+        """
+        self.n_fft = 400
+        self.hop = 100
+        self.train_ds = train_ds
+        self.test_ds = test_ds
+        
+        self.model = TSCNet(num_channel=64, 
+                            num_features=self.n_fft // 2 + 1, 
+                            gpu_id=gpu_id)
+        self.batchsize = batchsize
+        
+        self.log_wandb = log_wandb
+        self.gpu_id = gpu_id
+
+        self.discriminator = Discriminator(ndf=16)
+
+        if pretrain_init:
+            #Load checkpoint
+            print(f"Loading pretrained model saved at {args.pretrain}...")
+            cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
+            #Copy weights and freeze weights which are copied
+            keys, self.model = copy_weights(cmgan_state_dict, self.model)
+            self.model = freeze_layers(self.model, keys)
+            #Free mem
+            del cmgan_state_dict
+        elif pretrain is not None:
+            cmgan_state_dict = torch.load(pretrain, map_location=torch.device('cpu'))
+            #Get the keys which are supposed to be frozen
+            keys, _ = copy_weights(cmgan_state_dict, self.model, get_keys_only=True)
+            self.model = freeze_layers(self.model, keys)
+            #Free mem
+            del cmgan_state_dict
+
+        if gpu_id is not None:
+            self.model = self.model.to(gpu_id)
+            self.discriminator = self.discriminator.to(gpu_id)
+
+        #optimizers and schedulers
+        self.optimizer = torch.optim.AdamW(filter(lambda layer:layer.requires_grad,self.model.parameters()), 
+                                           lr=args.init_lr)
+        self.optimizer_disc = torch.optim.AdamW(
+            self.discriminator.parameters(), lr=2 * args.init_lr
+        )
+        self.scheduler_G = torch.optim.lr_scheduler.StepLR(
+            self.optimizer, step_size=args.decay_epoch, gamma=0.5
+        )
+        self.scheduler_D = torch.optim.lr_scheduler.StepLR(
+            self.optimizer_disc, step_size=args.decay_epoch, gamma=0.5
+        )
+
+        self.start_epoch = 0
+        if resume_pt is not None:
+            if not resume_pt.endswith('.pt'):
+                raise ValueError("Incorrect path to the checkpoint..")
+            try:
+                name = resume_pt[:-3]
+                epoch = name.split('_')[-1]
+                self.start_epoch = int(epoch)
+            except Exception:
+                self.start_epoch = int(resume_pt[-4])
+            self.load_checkpoint(resume_pt)
+
+        if parallel:
+            self.model = DDP(self.model, device_ids=[gpu_id])
+            self.discriminator = DDP(self.discriminator, device_ids=[gpu_id])
+        
+        if log_wandb:
+            wandb.login()
+            wandb.init(project=args.exp)
 
     def forward_generator_step(self, clean, noisy):
 
@@ -125,6 +210,65 @@ class Trainer:
             "clean_mag": clean_mag,
             "est_audio": est_audio,
         }
+    
+    def load_checkpoint(self, path):
+        try:
+            state_dict = torch.load(path, map_location=torch.device(self.gpu_id))
+            self.model.load_state_dict(state_dict['generator_state_dict'])
+            self.discriminator.load_state_dict(state_dict['discriminator_state_dict'])
+            self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
+            self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
+            self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
+            self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
+            print(f"Loaded checkpoint saved at {path} starting at epoch {self.start_epoch}")
+            del state_dict
+            
+        except Exception as e:
+            state_dict = torch.load(path, map_location=torch.device(self.gpu_id))
+            
+            gen_state_dict = OrderedDict()
+            for name, params in state_dict['generator_state_dict'].items():
+                name = name[7:]
+                gen_state_dict[name] = params        
+            self.model.load_state_dict(gen_state_dict)
+            del gen_state_dict
+            
+            disc_state_dict = OrderedDict()
+            for name, params in state_dict['discriminator_state_dict'].items():
+                name = name[7:]
+                disc_state_dict[name] = params
+            self.discriminator.load_state_dict(disc_state_dict)
+            del disc_state_dict
+            
+            self.optimizer.load_state_dict(state_dict['optimizer_G_state_dict'])
+            self.optimizer_disc.load_state_dict(state_dict['optimizer_D_state_dict'])
+            self.scheduler_G.load_state_dict(state_dict['scheduler_G_state_dict'])
+            self.scheduler_D.load_state_dict(state_dict['scheduler_D_state_dict'])
+            
+            print(f"Loaded checkpoint saved at {path} starting at epoch {self.start_epoch}")
+            del state_dict
+    
+    def save_model(self, path_root, exp, epoch, pesq):
+        """
+        Save model at path_root
+        """
+        checkpoint_prefix = f"{exp}_PESQ_{pesq}_epoch_{epoch}.pt"
+        path = os.path.join(path_root, exp)
+        os.makedirs(path, exist_ok=True)
+        path = os.path.join(path, checkpoint_prefix)
+        if self.gpu_id == 0:
+            save_dict = {'generator_state_dict':self.model.module.state_dict(), 
+                        'discriminator_state_dict':self.discriminator.module.state_dict(),
+                        'optimizer_G_state_dict':self.optimizer.state_dict(),
+                        'optimizer_D_state_dict':self.optimizer_disc.state_dict(),
+                        'scheduler_G_state_dict':self.scheduler_G.state_dict(),
+                        'scheduler_D_state_dict':self.scheduler_D.state_dict(),
+                        'epoch':epoch,
+                        'pesq':pesq
+                        }
+            
+            torch.save(save_dict, path)
+            print(f"checkpoint:{checkpoint_prefix} saved at {path}")
 
     def calculate_generator_loss(self, generator_outputs):
 
@@ -265,13 +409,7 @@ class Trainer:
         template = "GPU: {}, Generator loss: {}, Discriminator loss: {}"
         logging.info(template.format(self.gpu_id, gen_loss_avg, disc_loss_avg))
 
-        wandb.log({
-            'val_gen_loss':gen_loss_avg,
-            'val_disc_loss':disc_loss_avg,
-            'val_pesq':original_pesq(val_pesq)
-        })
-
-        return gen_loss_avg
+        return gen_loss_avg, disc_loss_avg, val_pesq
 
     def train(self):
         scheduler_G = torch.optim.lr_scheduler.StepLR(
@@ -280,7 +418,7 @@ class Trainer:
         scheduler_D = torch.optim.lr_scheduler.StepLR(
             self.optimizer_disc, step_size=args.decay_epoch, gamma=0.5
         )
-        for epoch in range(args.epochs):
+        for epoch in range(self.start_epoch+1, args.epochs):
             self.model.train()
             self.discriminator.train()
             for idx, batch in enumerate(self.train_ds):
@@ -291,7 +429,15 @@ class Trainer:
                     logging.info(
                         template.format(self.gpu_id, epoch, step, loss, disc_loss)
                     )
-            gen_loss = self.test()
+                
+            gen_loss, disc_loss, val_pesq = self.test()
+            wandb.log({
+                'val_gen_loss':gen_loss,
+                'val_disc_loss':disc_loss,
+                'val_pesq':original_pesq(val_pesq),
+                'Epoch':epoch
+            })
+            """
             path = os.path.join(
                 args.save_model_dir, args.exp, 
                 "CMGAN_epoch_" + str(epoch) + "_" + str(gen_loss)[:5],
@@ -300,6 +446,11 @@ class Trainer:
                 os.makedirs(os.path.join(args.save_model_dir, args.exp), exist_ok=True)
             if self.gpu_id == 0:
                 torch.save(self.model.module.state_dict(), path)
+            """
+            self.save_model(path_root=args.save_model_dir,
+                            exp=args.exp,
+                            epoch=epoch,
+                            pesq=original_pesq(val_pesq))
             scheduler_G.step()
             scheduler_D.step()
 
@@ -316,7 +467,15 @@ def main(rank: int, world_size: int, args):
         args.data_dir, args.batch_size, 1, args.cut_len, parallel=True
     )
     print(f"Train:{len(train_ds)}, Validation:{len(test_ds)}")
-    trainer = Trainer(train_ds, test_ds, rank)
+    trainer = Trainer(train_ds=train_ds, 
+                      test_ds=test_ds, 
+                      batchsize=args.batch_size, 
+                      parallel=args.parallel, 
+                      gpu_id=rank, 
+                      pretrain=args.pretrain,
+                      pretrain_init=args.pretrain_init,
+                      resume_pt=args.ckpt,
+                      log_wandb=args.wandb)
     trainer.train()
     destroy_process_group()
 
