@@ -191,7 +191,7 @@ class Trainer:
         # Trainer generator
         clean = batch[0].to(self.gpu_id)
         noisy = batch[1].to(self.gpu_id)
-        one_labels = torch.ones(args.batch_size).to(self.gpu_id)
+        one_labels = torch.ones(clean.shape[0]).to(self.gpu_id)
 
         #Run generator
         generator_outputs = self.forward_generator_step(
@@ -229,7 +229,7 @@ class Trainer:
 
         clean = batch[0].to(self.gpu_id)
         noisy = batch[1].to(self.gpu_id)
-        one_labels = torch.ones(batch.shape[0]).to(self.gpu_id)
+        one_labels = torch.ones(clean.shape[0]).to(self.gpu_id)
 
         generator_outputs = self.forward_generator_step(
             clean,
