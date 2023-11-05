@@ -7,7 +7,7 @@ from utils import *
 import torchaudio
 import soundfile as sf
 import argparse
-import tqdm as tqdm
+from tqdm import tqdm
 
 
 @torch.no_grad()
