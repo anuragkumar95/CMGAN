@@ -7,6 +7,7 @@ from utils import *
 import torchaudio
 import soundfile as sf
 import argparse
+import tqdm as tqdm
 
 
 @torch.no_grad()
@@ -70,8 +71,9 @@ def evaluation(model_path, noisy_dir, clean_dir, save_tracks, saved_dir):
     audio_list = os.listdir(noisy_dir)
     audio_list = natsorted(audio_list)
     num = len(audio_list)
+    print(f"Parsed {num} audios in {noisy_dir}...")
     metrics_total = np.zeros(6)
-    for audio in audio_list:
+    for audio in tqdm(audio_list):
         noisy_path = os.path.join(noisy_dir, audio)
         clean_path = os.path.join(clean_dir, audio)
         est_audio, length = enhance_one_track(
