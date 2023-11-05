@@ -60,7 +60,7 @@ def enhance_one_track(
 
 def evaluation(model_path, noisy_dir, clean_dir, save_tracks, saved_dir):
     n_fft = 400
-    model = generator2.TSCNet(num_channel=64, num_features=n_fft // 2 + 1).cuda()
+    model = generator2.TSCNet(num_channel=64, num_features=n_fft // 2 + 1, gpu_id=0).cuda()
     model.load_state_dict(torch.load(model_path)['generator_state_dict'])
     model.eval()
 
